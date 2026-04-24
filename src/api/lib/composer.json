@@ -1,0 +1,22 @@
+{
+    "name": "timetracker/api",
+    "description": "TimeTracker Backend API",
+    "require": {
+        "php": ">=8.1",
+        "slim/slim": "^4.0",
+        "slim/psr7": "^1.0",
+        "php-di/php-di": "^7.0",
+        "lcobucci/jwt": "^5.0",
+        "guzzlehttp/guzzle": "^7.0",
+        "phpoffice/phpspreadsheet": "^2.0",
+        "setasign/fpdf": "^1.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "TimeTracker\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true
+    }
+}

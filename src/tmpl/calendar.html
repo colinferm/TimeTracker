@@ -1,0 +1,30 @@
+<div class="calendar-container">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <button class="btn btn-outline-secondary btn-prev">&lsaquo; Prev</button>
+        <h3 class="mb-0">{{monthLabel}}</h3>
+        <button class="btn btn-outline-secondary btn-next">Next &rsaquo;</button>
+    </div>
+
+    <table class="table table-bordered calendar-table text-center">
+        <thead class="table-secondary">
+            <tr>
+                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th>
+                <th>Thu</th><th>Fri</th><th>Sat</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each weeks}}
+            <tr>
+                {{#each this}}
+                <td class="calendar-day {{#unless isCurrentMonth}}text-muted bg-light{{/unless}} {{#if isToday}}bg-dark-subtle fw-bold{{/if}}"
+                    data-date="{{date}}" style="cursor:pointer; min-height:80px; vertical-align:top;">
+                    <span class="{{#if isToday}}badge bg-dark rounded-circle{{/if}}">{{day}}</span>
+                </td>
+                {{/each}}
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="monthly-summary"></div>
+</div>

@@ -1,0 +1,57 @@
+<form id="client-form">
+    <div class="alert alert-danger form-error mb-3" style="display:none;">
+        An error occurred while saving. Please try again.
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="name" id="client-name" class="form-control" value="{{client.name}}" placeholder="Client Name" required>
+        <label for="client-name">Client Name <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="primary_contact" id="client-primary-contact" class="form-control" value="{{client.primary_contact}}" placeholder="Primary Contact">
+        <label for="client-primary-contact">Primary Contact</label>
+    </div>
+    <div class="form-floating mb-2">
+        <input type="text" name="address_1" id="client-address-1" class="form-control" value="{{client.address_1}}" placeholder="Address Line 1">
+        <label for="client-address-1">Address Line 1</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="address_2" id="client-address-2" class="form-control" value="{{client.address_2}}" placeholder="Address Line 2">
+        <label for="client-address-2">Address Line 2</label>
+    </div>
+    <div class="row">
+        <div class="col-md-5 mb-3">
+            <div class="form-floating">
+                <input type="text" name="city" id="client-city" class="form-control" value="{{client.city}}" placeholder="City">
+                <label for="client-city">City</label>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="form-floating">
+                <input type="text" name="state_province" id="client-state" class="form-control" value="{{client.state_province}}" placeholder="State / Province">
+                <label for="client-state">State / Province</label>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="form-floating">
+                <input type="text" name="postal_code" id="client-postal" class="form-control" value="{{client.postal_code}}" placeholder="Postal Code">
+                <label for="client-postal">Postal Code</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="country" id="client-country" class="form-control" value="{{client.country}}" placeholder="Country">
+        <label for="client-country">Country</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="number" name="bill_rate" id="client-bill-rate" class="form-control" value="{{client.bill_rate}}" min="0" step="0.01" placeholder="135.00">
+        <label for="client-bill-rate">Bill Rate ($/hr)</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="start_date" id="client-start-date" class="form-control" value="{{client.start_date}}" placeholder=" ">
+        <label for="client-start-date">Start Date</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="end_date" id="client-end-date" class="form-control" value="{{client.end_date}}" placeholder=" ">
+        <label for="client-end-date">End Date</label>
+    </div>
+</form>

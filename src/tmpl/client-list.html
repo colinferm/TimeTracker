@@ -1,0 +1,37 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Clients</h2>
+    <button class="btn btn-primary btn-add-client">+ Add Client</button>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Client Name</th>
+                    <th>Bill Rate</th>
+                    <th>Primary Contact</th>
+                    <th>State / Province</th>
+                    <th>Start Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each clients}}
+                <tr>
+                    <td>
+                        <a href="#" class="client-name-link fw-semibold" data-id="{{id}}">{{name}}</a>
+                    </td>
+                    <td>${{bill_rate}}/hr</td>
+                    <td>{{#if primary_contact}}{{primary_contact}}{{else}}&mdash;{{/if}}</td>
+                    <td>{{#if state_province}}{{state_province}}{{else}}&mdash;{{/if}}</td>
+                    <td>{{start_date}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="5" class="text-center text-muted fst-italic py-4">No clients yet. Click "Add Client" to get started.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

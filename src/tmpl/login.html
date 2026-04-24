@@ -1,0 +1,25 @@
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
+    <div class="card shadow" style="width: 380px;">
+        <div class="card-body p-4">
+            <h1 class="card-title text-center mb-4">
+                <span class="text-primary">Time</span>Tracker
+            </h1>
+            <div class="alert alert-danger login-error" style="display:none;">
+                Invalid username or password.
+            </div>
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" id="username" name="username" class="form-control" autocomplete="username" autofocus required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-login">Sign In</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

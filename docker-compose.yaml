@@ -1,0 +1,39 @@
+version: "3.7"
+services:
+  web-server:
+    build:
+      dockerfile: php8.Dockerfile
+      context: .
+    container_name: timetracker-web-server
+    depends_on:
+      - mysql-server
+    environment:
+      DATABASE_HOST: mysql-server
+      DATABASE_USER: timetracker
+      DATABASE_PASSWORD: timetracker
+      REDIS_HOST: "127.0.0.1"
+      NODE_ENV: development
+      DOMAIN_NAME: localhost:8080
+      XDEBUG_SESSION: 1
+    ports:
+      - "8080:80"
+      - "9001:12080"
+      - "4568:4568"
+    volumes:
+      - "./src/:/var/www/html/"
+
+  mysql-server:
+    image: mysql:8.3.0
+    container_name: timetracker-mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD: timetracker
+      MYSQL_USER: timetracker
+      MYSQL_PASSWORD: timetracker
+    ports:
+      - "33060:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./data:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql-data:

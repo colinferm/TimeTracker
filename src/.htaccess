@@ -1,0 +1,13 @@
+Options -Indexes
+RewriteEngine On
+
+# Route API requests to the Slim app
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+
+# Serve real files and directories directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Everything else → SPA entry point
+RewriteRule ^ index.php [QSA,L]

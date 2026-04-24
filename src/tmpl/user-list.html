@@ -1,0 +1,37 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Users</h2>
+    <button class="btn btn-primary btn-add-user">+ Add User</button>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Country</th>
+                    <th>Admin</th>
+                    <th>Last Login</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each users}}
+                <tr>
+                    <td><a href="#" class="user-row-link fw-semibold" data-id="{{id}}">{{username}}</a></td>
+                    <td>{{first_name}} {{last_name}}</td>
+                    <td>{{email_address}}</td>
+                    <td>{{#if country}}{{country}}{{else}}&mdash;{{/if}}</td>
+                    <td>{{#if is_admin}}<span class="badge bg-warning text-dark">Admin</span>{{else}}&mdash;{{/if}}</td>
+                    <td>{{last_login}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" class="text-center text-muted fst-italic py-4">No users found.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,35 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Projects</h2>
+    <button class="btn btn-primary btn-add-project">+ Add Project</button>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Project Name</th>
+                    <th>Client</th>
+                    <th>Bill Rate</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each projects}}
+                <tr>
+                    <td><a href="#" class="project-name-link fw-semibold" data-id="{{id}}">{{name}}</a></td>
+                    <td>{{client_name}}</td>
+                    <td>${{bill_rate}}/hr</td>
+                    <td>{{start_date}}</td>
+                    <td>{{#if end_date}}{{end_date}}{{else}}&mdash;{{/if}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="5" class="text-center text-muted fst-italic py-4">No projects yet. Click "+ Add Project" to get started.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

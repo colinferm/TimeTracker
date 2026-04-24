@@ -1,0 +1,27 @@
+<form id="project-form">
+    <div class="alert alert-danger form-error mb-3" style="display:none;">
+        An error occurred while saving. Please try again.
+    </div>
+    <div class="form-floating mb-3">
+        <select name="client_id" id="project-client" class="form-control" required>
+            <option value="">-- Select Client --</option>
+        </select>
+        <label for="project-client">Client <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="name" id="project-name" class="form-control" value="{{project.name}}" placeholder="Project Name" required>
+        <label for="project-name">Project Name <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="number" name="bill_rate" id="project-bill-rate" class="form-control" value="{{project.bill_rate}}" min="0" step="0.01" placeholder="0.00">
+        <label for="project-bill-rate">Bill Rate ($/hr)</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="start_date" id="project-start-date" class="form-control" value="{{project.start_date}}" placeholder=" ">
+        <label for="project-start-date">Start Date</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="end_date" id="project-end-date" class="form-control" value="{{project.end_date}}" placeholder=" ">
+        <label for="project-end-date">End Date</label>
+    </div>
+</form>

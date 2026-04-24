@@ -1,0 +1,46 @@
+<form id="user-form">
+    {{#unless isNew}}
+    <div class="row mb-2">
+        <label class="col-sm-4 col-form-label text-muted small">Registered</label>
+        <div class="col-sm-8 col-form-label small">{{user.registered}}</div>
+    </div>
+    <div class="row mb-3">
+        <label class="col-sm-4 col-form-label text-muted small">Last Login</label>
+        <div class="col-sm-8 col-form-label small">{{user.last_login}}</div>
+    </div>
+    {{/unless}}
+    <div class="form-floating mb-3">
+        <input type="text" name="username" id="user-username" class="form-control" value="{{user.username}}" placeholder="Username" required>
+        <label for="user-username">Username <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating {{#if isNew}}mb-3{{else}}mb-1{{/if}}">
+        <input type="password" name="password" id="user-password" class="form-control" placeholder="Password" {{#if isNew}}required{{/if}}>
+        <label for="user-password">Password{{#if isNew}} <span class="text-danger">*</span>{{/if}}</label>
+    </div>
+    {{#unless isNew}}<p class="form-text text-muted small mb-3">Leave blank to keep current password.</p>{{/unless}}
+    <div class="form-floating mb-3">
+        <input type="text" name="first_name" id="user-first-name" class="form-control" value="{{user.first_name}}" placeholder="First Name">
+        <label for="user-first-name">First Name</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="last_name" id="user-last-name" class="form-control" value="{{user.last_name}}" placeholder="Last Name">
+        <label for="user-last-name">Last Name</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="email" name="email_address" id="user-email" class="form-control" value="{{user.email_address}}" placeholder="email@example.com" required>
+        <label for="user-email">Email <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="country" id="user-country" class="form-control" value="{{user.country}}" placeholder="Country">
+        <label for="user-country">Country</label>
+    </div>
+    <div class="mb-2 form-check">
+        <input type="checkbox" name="confirmed" id="user-confirmed" class="form-check-input" {{#if user.confirmed}}checked{{/if}}>
+        <label class="form-check-label" for="user-confirmed">Confirmed</label>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" name="is_admin" id="user-is-admin" class="form-check-input" {{#if user.is_admin}}checked{{/if}}>
+        <label class="form-check-label" for="user-is-admin">Administrator</label>
+    </div>
+    <div class="alert alert-danger form-error mb-0" style="display:none;">An error occurred. Please try again.</div>
+</form>
