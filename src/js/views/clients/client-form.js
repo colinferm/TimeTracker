@@ -31,7 +31,9 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 			country: this.$('[name=country]').val().trim(),
 			bill_rate: parseFloat(this.$('[name=bill_rate]').val()) || 0,
 			start_date: this.$('[name=start_date]').val(),
-			end_date: this.$('[name=end_date]').val() || null
+			end_date: this.$('[name=end_date]').val() || null,
+			invoice_services: this.$('[name=invoice_services]').val().trim(),
+			invoice_line_item: this.$('[name=invoice_line_item]').val().trim()
 		};
 
 		this.$('.form-error').hide();

@@ -51,15 +51,26 @@ $app->add(function (Request $request, $handler): Response {
 
 // JWT auth middleware
 $authMiddleware = function (Request $request, $handler) use ($jwtConfig): Response {
+    $tokenString = null;
+
     $authHeader = $request->getHeaderLine('Authorization');
-    if (!$authHeader || !preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
+    if ($authHeader && preg_match('/Bearer\s+(.+)$/i', $authHeader, $matches)) {
+        $tokenString = $matches[1];
+    } else {
+        $cookies = $request->getCookieParams();
+        if (!empty($cookies['tt_auth'])) {
+            $tokenString = $cookies['tt_auth'];
+        }
+    }
+
+    if (!$tokenString) {
         $response = new \Slim\Psr7\Response();
         $response->getBody()->write(json_encode(['error' => 'Unauthorized']));
         return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
     }
 
     try {
-        $token = $jwtConfig->parser()->parse($matches[1]);
+        $token = $jwtConfig->parser()->parse($tokenString);
         $jwtConfig->validator()->assert(
             $token,
             new SignedWith($jwtConfig->signer(), $jwtConfig->signingKey())
@@ -119,5 +130,11 @@ $app->delete('/hours/{id}', $deleteTimeRecord)->add($authMiddleware);
 // ─── Exports ──────────────────────────────────────────────────────────────────
 $app->get('/exports/excel', $exportExcel)->add($authMiddleware);
 $app->get('/exports/pdf',   $exportPdf)->add($authMiddleware);
+
+// ─── Invoices ─────────────────────────────────────────────────────────────────
+$app->get('/exports/invoices', $listInvoices)->add($authMiddleware);
+$app->post('/exports/invoice', $createInvoice)->add($authMiddleware);
+$app->put('/exports/invoices/{id}', $updateInvoice)->add($authMiddleware);
+$app->get('/exports/invoices/{id}/pdf', $generateInvoicePdf)->add($authMiddleware);
 
 $app->run();

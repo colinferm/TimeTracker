@@ -7,6 +7,14 @@
         <label for="client-name">Client Name <span class="text-danger">*</span></label>
     </div>
     <div class="form-floating mb-3">
+        <input type="text" name="invoice_services" id="client-invoice-services" class="form-control" value="{{client.invoice_services}}" placeholder="Invoice Services Description">
+        <label for="client-invoice-services">Invoice Services Description</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="invoice_line_item" id="client-invoice-line-item" class="form-control" value="{{client.invoice_line_item}}" placeholder="Invoice Line Item">
+        <label for="client-invoice-line-item">Invoice Line Item</label>
+    </div>
+    <div class="form-floating mb-3">
         <input type="text" name="primary_contact" id="client-primary-contact" class="form-control" value="{{client.primary_contact}}" placeholder="Primary Contact">
         <label for="client-primary-contact">Primary Contact</label>
     </div>

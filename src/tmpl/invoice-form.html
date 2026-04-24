@@ -1,0 +1,25 @@
+<form id="invoice-form">
+    <div class="alert alert-danger form-error mb-3" style="display:none;">
+        An error occurred while generating the invoice. Please try again.
+    </div>
+    <div class="form-floating mb-3">
+        <select name="client_id" id="invoice-client" class="form-control" required>
+            <option value="">-- Select Client --</option>
+        </select>
+        <label for="invoice-client">Client <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <select name="project_id" id="invoice-project" class="form-control">
+            <option value="">-- No Project --</option>
+        </select>
+        <label for="invoice-project">Project</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="start_date" id="invoice-start-date" class="form-control" placeholder=" " required>
+        <label for="invoice-start-date">Start Date <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="date" name="end_date" id="invoice-end-date" class="form-control" placeholder=" " required>
+        <label for="invoice-end-date">End Date <span class="text-danger">*</span></label>
+    </div>
+</form>

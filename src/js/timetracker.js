@@ -1,4 +1,4 @@
-/* TimeTracker – Compiled: 2026-04-24, 15:41:24.4 */
+/* TimeTracker – Compiled: 2026-04-24, 19:13:29.1 */
 var TimeTracker = {
 	Apps: {
 		Data: {}
@@ -331,6 +331,7 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 		'clients': 'clients',
 		'projects': 'projects',
 		'reports': 'reports',
+		'invoices': 'invoices',
 		'users': 'users'
 	},
 
@@ -352,6 +353,10 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 
 	reports: function() {
 		app.showView(new TimeTracker.Views.Reports());
+	},
+
+	invoices: function() {
+		app.showView(new TimeTracker.Views.Invoices.List());
 	},
 
 	users: function() {
@@ -500,6 +505,24 @@ TimeTracker.Models.Client = Backbone.Model.extend({
 TimeTracker.Collections.Clients = Backbone.Collection.extend({
 	model: TimeTracker.Models.Client,
 	url: '/api/clients'
+});
+
+TimeTracker.Models.Invoice = Backbone.Model.extend({
+	urlRoot: '/api/exports/invoices',
+	defaults: {
+		client_id: null,
+		project_id: null,
+		invoice_number: '',
+		invoice_total: 0.00,
+		billed_date: null,
+		paid_date: null,
+		is_billed: 0
+	}
+});
+
+TimeTracker.Collections.Invoices = Backbone.Collection.extend({
+	model: TimeTracker.Models.Invoice,
+	url: '/api/exports/invoices'
 });
 
 TimeTracker.Models.Client.TimeRecord = Backbone.Model.extend({
@@ -815,6 +838,8 @@ function roundToNearest15(date) {
 	return rounded;
 }
 
+TimeTracker.Views.Invoices = TimeTracker.Views.Invoices || {};
+
 TimeTracker.Views.Login = Backbone.View.extend({
 	tagName: 'div',
 	className: 'login-wrapper',
@@ -994,7 +1019,9 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 			country: this.$('[name=country]').val().trim(),
 			bill_rate: parseFloat(this.$('[name=bill_rate]').val()) || 0,
 			start_date: this.$('[name=start_date]').val(),
-			end_date: this.$('[name=end_date]').val() || null
+			end_date: this.$('[name=end_date]').val() || null,
+			invoice_services: this.$('[name=invoice_services]').val().trim(),
+			invoice_line_item: this.$('[name=invoice_line_item]').val().trim()
 		};
 
 		this.$('.form-error').hide();
@@ -1059,6 +1086,163 @@ TimeTracker.Views.Clients.List = Backbone.View.extend({
 	}
 });
 
+TimeTracker.Views.Invoices = TimeTracker.Views.Invoices || {};
+
+TimeTracker.Views.Invoices.EditForm = Backbone.View.extend({
+	tagName: 'div',
+	className: 'invoice-edit-form-view',
+	templateName: 'invoice-edit-form',
+
+	initialize: function(options) {
+		this.model = options.model;
+		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
+		this.template = Handlebars.compile(html);
+	},
+
+	render: function() {
+		this.$el.html(this.template({ invoice: this.model.toJSON() }));
+		return this;
+	},
+
+	doSave: function(callback) {
+		var self = this;
+		var data = {
+			is_billed: this.$('[name=is_billed]').is(':checked') ? 1 : 0,
+			paid_date: this.$('[name=paid_date]').val() || null
+		};
+		this.$('.form-error').hide();
+		this.model.save(data, {
+			success: function() { callback(true, self.model); },
+			error: function() { self.$('.form-error').show(); callback(false); }
+		});
+	}
+});
+
+TimeTracker.Views.Invoices = TimeTracker.Views.Invoices || {};
+
+TimeTracker.Views.Invoices.Form = Backbone.View.extend({
+	tagName: 'div',
+	className: 'invoice-form-view',
+	templateName: 'invoice-form',
+
+	initialize: function(options) {
+		this.model = options.model;
+		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
+		this.template = Handlebars.compile(html);
+
+		this.clients = new TimeTracker.Collections.Clients();
+		this.listenTo(this.clients, 'reset sync', this.renderClientSelect);
+		this.clients.fetch({ reset: true });
+	},
+
+	render: function() {
+		this.$el.html(this.template({}));
+		this.$('[name=client_id]').on('change', _.bind(this.onClientChange, this));
+		return this;
+	},
+
+	renderClientSelect: function() {
+		var $select = this.$('[name=client_id]');
+		$select.empty();
+		$select.append('<option value="">-- Select Client --</option>');
+		this.clients.each(function(c) {
+			$select.append('<option value="' + c.get('id') + '">' + c.get('name') + '</option>');
+		});
+	},
+
+	onClientChange: function() {
+		var clientId = this.$('[name=client_id]').val();
+		var $projectSelect = this.$('[name=project_id]');
+		$projectSelect.empty();
+		$projectSelect.append('<option value="">-- No Project --</option>');
+		if (!clientId) return;
+		var projects = new TimeTracker.Collections.ClientProjects([], { clientId: clientId });
+		projects.fetch({
+			success: function() {
+				projects.each(function(p) {
+					$projectSelect.append('<option value="' + p.get('id') + '">' + p.get('name') + '</option>');
+				});
+			}
+		});
+	},
+
+	doSave: function(callback) {
+		var self = this;
+		var data = {
+			client_id: this.$('[name=client_id]').val(),
+			project_id: this.$('[name=project_id]').val() || null,
+			start_date: this.$('[name=start_date]').val(),
+			end_date: this.$('[name=end_date]').val()
+		};
+		this.$('.form-error').hide();
+		$.ajax({
+			url: '/api/exports/invoice',
+			method: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(data),
+			beforeSend: TimeTracker.Apps.handleAjaxAuth,
+			success: function() { callback(true); },
+			error: function() { self.$('.form-error').show(); callback(false); }
+		});
+	}
+});
+
+TimeTracker.Views.Invoices = TimeTracker.Views.Invoices || {};
+
+TimeTracker.Views.Invoices.List = Backbone.View.extend({
+	tagName: 'div',
+	className: 'invoice-list-view',
+	templateName: 'invoice-list',
+
+	events: {
+		'click .btn-create-invoice': 'createInvoice',
+		'click .invoice-date-link': 'editInvoice'
+	},
+
+	initialize: function() {
+		this.collection = new TimeTracker.Collections.Invoices();
+		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
+		this.template = Handlebars.compile(html);
+		this.listenTo(this.collection, 'reset sync', this.render);
+		this.collection.fetch({ reset: true });
+	},
+
+	render: function() {
+		this.$el.html(this.template({ invoices: this.collection.toJSON() }));
+		return this;
+	},
+
+	createInvoice: function() {
+		var self = this;
+		new TimeTracker.Views.Modal({
+			title: 'Create Invoice',
+			class: 'TimeTracker.Views.Invoices.Form',
+			model: new TimeTracker.Models.Invoice(),
+			buttonText: 'Generate Report',
+			callback: function() {
+				self.collection.fetch({ reset: true });
+			}
+		});
+	},
+
+	editInvoice: function(e) {
+		e.preventDefault();
+		var self = this;
+		var id = $(e.currentTarget).data('id');
+		var model = this.collection.get(id);
+		if (!model) return;
+		new TimeTracker.Views.Modal({
+			title: 'Edit Invoice',
+			class: 'TimeTracker.Views.Invoices.EditForm',
+			model: model,
+			buttonText: 'Save Changes',
+			callback: function() {
+				self.collection.fetch({ reset: true });
+			}
+		});
+	}
+});
+
 TimeTracker.Views.Projects = TimeTracker.Views.Projects || {};
 
 TimeTracker.Views.Projects.Form = Backbone.View.extend({
@@ -1099,7 +1283,8 @@ TimeTracker.Views.Projects.Form = Backbone.View.extend({
 			name: this.$('[name=name]').val().trim(),
 			bill_rate: parseFloat(this.$('[name=bill_rate]').val()) || 0,
 			start_date: this.$('[name=start_date]').val(),
-			end_date: this.$('[name=end_date]').val() || null
+			end_date: this.$('[name=end_date]').val() || null,
+			invoice_line_item: this.$('[name=invoice_line_item]').val().trim()
 		};
 		this.$('.form-error').hide();
 		this.model.save(data, {

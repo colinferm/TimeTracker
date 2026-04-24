@@ -5,7 +5,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
 $listClients = function (Request $request, Response $response) use ($db): Response {
-    $clients = $db->query("SELECT id, name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date FROM tt_client ORDER BY start_date ASC")->fetchAll();
+    $clients = $db->query("SELECT id, name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, invoice_services, invoice_line_item, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date FROM tt_client ORDER BY start_date ASC")->fetchAll();
     $response->getBody()->write(json_encode($clients));
     return $response->withHeader('Content-Type', 'application/json');
 };
@@ -20,8 +20,8 @@ $createClient = function (Request $request, Response $response) use ($db): Respo
 
     $stmt = $db->prepare(
         'INSERT INTO tt_client
-            (name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, start_date, end_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            (name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, invoice_services, invoice_line_item, start_date, end_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $data['name'],
@@ -33,6 +33,8 @@ $createClient = function (Request $request, Response $response) use ($db): Respo
         $data['postal_code'] ?? '',
         $data['country'] ?? '',
         $data['bill_rate'] ?? 135.00,
+        $data['invoice_services'] ?? '',
+        $data['invoice_line_item'] ?? '',
         $data['start_date'] ?? date('Y-m-d H:i:s'),
         $data['end_date'] ?? null,
     ]);
@@ -43,7 +45,7 @@ $createClient = function (Request $request, Response $response) use ($db): Respo
 };
 
 $getClient = function (Request $request, Response $response, array $args) use ($db): Response {
-    $stmt = $db->prepare("SELECT id, name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date FROM tt_client WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, name, primary_contact, address_1, address_2, city, state_province, postal_code, country, bill_rate, invoice_services, invoice_line_item, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date FROM tt_client WHERE id = ?");
     $stmt->execute([$args['id']]);
     $client = $stmt->fetch();
 
@@ -62,7 +64,8 @@ $updateClient = function (Request $request, Response $response, array $args) use
     $values = [];
 
     foreach (['name', 'primary_contact', 'address_1', 'address_2', 'city',
-              'state_province', 'postal_code', 'country', 'bill_rate', 'start_date', 'end_date'] as $field) {
+              'state_province', 'postal_code', 'country', 'bill_rate',
+              'invoice_services', 'invoice_line_item', 'start_date', 'end_date'] as $field) {
         if (array_key_exists($field, $data)) {
             $fields[] = "{$field} = ?";
             $values[] = $data[$field];
@@ -107,12 +110,13 @@ $createProjectFlat = function (Request $request, Response $response) use ($db): 
     }
 
     $stmt = $db->prepare(
-        'INSERT INTO tt_client_project (client_id, name, bill_rate, start_date, end_date) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO tt_client_project (client_id, name, bill_rate, invoice_line_item, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $data['client_id'],
         $data['name'],
         $data['bill_rate'] ?? 0.00,
+        $data['invoice_line_item'] ?? '',
         $data['start_date'] ?? date('Y-m-d H:i:s'),
         $data['end_date'] ?? null,
     ]);
@@ -139,12 +143,13 @@ $createClientProject = function (Request $request, Response $response, array $ar
     }
 
     $stmt = $db->prepare(
-        'INSERT INTO tt_client_project (client_id, name, bill_rate, start_date, end_date) VALUES (?, ?, ?, ?, ?)'
+        'INSERT INTO tt_client_project (client_id, name, bill_rate, invoice_line_item, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $args['clientId'],
         $data['name'],
         $data['bill_rate'] ?? 0.00,
+        $data['invoice_line_item'] ?? '',
         $data['start_date'] ?? date('Y-m-d H:i:s'),
         $data['end_date'] ?? null,
     ]);
@@ -173,7 +178,7 @@ $updateProject = function (Request $request, Response $response, array $args) us
     $fields = [];
     $values = [];
 
-    $updatable = ['client_id', 'name', 'bill_rate', 'start_date', 'end_date'];
+    $updatable = ['client_id', 'name', 'bill_rate', 'invoice_line_item', 'start_date', 'end_date'];
     foreach ($updatable as $field) {
         if (array_key_exists($field, $data)) {
             $fields[] = "{$field} = ?";

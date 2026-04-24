@@ -1,0 +1,37 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Invoices</h2>
+    <button class="btn btn-primary btn-create-invoice">+ Create Invoice</button>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Invoice Date</th>
+                    <th>Client</th>
+                    <th>Invoice Total</th>
+                    <th>Billed</th>
+                    <th>Paid Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each invoices}}
+                <tr>
+                    <td>{{invoice_number}}</td>
+                    <td><a href="#" class="invoice-date-link fw-semibold" data-id="{{id}}">{{created}}</a></td>
+                    <td>{{client_name}}</td>
+                    <td>${{invoice_total}}</td>
+                    <td>{{#if is_billed}}<span class="badge bg-success">Yes</span>{{else}}<span class="badge bg-secondary">No</span>{{/if}}</td>
+                    <td>{{#if paid_date}}{{paid_date}}{{else}}&mdash;{{/if}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" class="text-center text-muted fst-italic py-4">No invoices yet. Click "+ Create Invoice" to get started.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>

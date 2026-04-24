@@ -46,7 +46,9 @@ $loginUser = function (Request $request, Response $response) use ($db, $jwtConfi
     ];
 
     $response->getBody()->write(json_encode($result));
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response
+        ->withHeader('Content-Type', 'application/json')
+        ->withHeader('Set-Cookie', 'tt_auth=' . $token->toString() . '; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400');
 };
 
 $listUsers = function (Request $request, Response $response) use ($db): Response {

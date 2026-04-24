@@ -1,0 +1,32 @@
+<div class="mb-3">
+    <div class="text-muted small mb-1">Invoice Number</div>
+    <div class="fw-semibold">{{invoice.invoice_number}}</div>
+</div>
+<div class="mb-3">
+    <div class="text-muted small mb-1">Invoice Total</div>
+    <div class="fw-semibold">${{invoice.invoice_total}}</div>
+</div>
+<hr>
+{{#if invoice.is_billed}}
+<div class="mb-3">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="is_billed" id="invoice-is-billed" checked disabled>
+        <label class="form-check-label" for="invoice-is-billed">Is Billed</label>
+    </div>
+    <div class="text-muted small mt-1">Billed on: {{invoice.billed_date}}</div>
+</div>
+{{else}}
+<div class="mb-3">
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="is_billed" id="invoice-is-billed">
+        <label class="form-check-label" for="invoice-is-billed">Is Billed</label>
+    </div>
+</div>
+{{/if}}
+<div class="form-floating mb-3">
+    <input type="date" name="paid_date" id="invoice-paid-date" class="form-control" value="{{invoice.paid_date}}" placeholder=" ">
+    <label for="invoice-paid-date">Paid Date</label>
+</div>
+<div class="alert alert-danger form-error mb-0" style="display:none;">
+    An error occurred while saving. Please try again.
+</div>
