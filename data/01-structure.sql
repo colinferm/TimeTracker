@@ -26,6 +26,7 @@ VALUES ('colin', '$2y$10$a2gV2.OC.tEPC9EKXEyzo.bdaFkA.NgIO2pRon8iz4jEdgwdXmM4S',
 DROP TABLE IF EXIST tt_organization;
 CREATE TABLE tt_organization (
 	id INT NOT NULL AUTO_INCREMENT,
+	primary_user_id INT,
 	name VARCHAR(255) NOT NULL,
 	address_1 VARCHAR(255),
 	address_2 VARCHAR(255),
@@ -33,6 +34,7 @@ CREATE TABLE tt_organization (
 	state_province VARCHAR(10),
 	postal_code VARCHAR(15),
 	country VARCHAR(200),
+	phone_number VARCHAR(30),
 	PRIMARY KEY (id)
 );
 INSERT INTO tt_organization (id, name) VALUES (1, '42 Solutions');

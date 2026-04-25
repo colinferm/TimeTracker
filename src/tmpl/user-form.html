@@ -30,6 +30,11 @@
         <input type="email" name="email_address" id="user-email" class="form-control" value="{{user.email_address}}" placeholder="email@example.com" required>
         <label for="user-email">Email <span class="text-danger">*</span></label>
     </div>
+    <div class="mb-3">
+        <label class="form-label">Organizations</label>
+        <select name="organization_ids" id="user-organizations" class="form-control" multiple style="min-height:100px;">
+        </select>
+    </div>
     <div class="form-floating mb-3">
         <input type="text" name="country" id="user-country" class="form-control" value="{{user.country}}" placeholder="Country">
         <label for="user-country">Country</label>
@@ -45,11 +50,6 @@
     <div class="mb-3 form-check">
         <input type="checkbox" name="is_superuser" id="user-is-superuser" class="form-check-input" {{#if user.is_superuser}}checked{{/if}}>
         <label class="form-check-label" for="user-is-superuser">Superuser</label>
-    </div>
-    <div class="mb-3">
-        <label class="form-label">Organizations</label>
-        <select name="organization_ids" id="user-organizations" class="form-control" multiple style="min-height:100px;">
-        </select>
     </div>
     <div class="alert alert-danger form-error mb-0" style="display:none;">An error occurred. Please try again.</div>
 </form>

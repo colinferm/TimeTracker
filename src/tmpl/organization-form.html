@@ -6,6 +6,16 @@
         <input type="text" name="name" id="org-name" class="form-control" value="{{organization.name}}" placeholder="Organization Name" required>
         <label for="org-name">Organization Name <span class="text-danger">*</span></label>
     </div>
+    <div class="form-floating mb-3">
+        <select name="primary_user_id" id="org-primary-user" class="form-control">
+            <option value="">-- No Primary User --</option>
+        </select>
+        <label for="org-primary-user">Primary User</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="phone_number" id="org-phone" class="form-control" value="{{organization.phone_number}}" placeholder="Phone Number">
+        <label for="org-phone">Phone Number</label>
+    </div>
     <div class="form-floating mb-2">
         <input type="text" name="address_1" id="org-address-1" class="form-control" value="{{organization.address_1}}" placeholder="Address Line 1">
         <label for="org-address-1">Address Line 1</label>

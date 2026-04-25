@@ -23,7 +23,17 @@
                     <td>{{first_name}} {{last_name}}</td>
                     <td>{{email_address}}</td>
                     <td>{{#if country}}{{country}}{{else}}&mdash;{{/if}}</td>
-                    <td>{{#if is_admin}}<span class="badge bg-warning text-dark">Admin</span>{{else}}&mdash;{{/if}}</td>
+                    <td>
+                        {{#if is_admin}}
+                            {{#if is_superuser}}
+                                <span class="badge bg-danger text-light">Super Admin</span>
+                            {{else}}
+                                <span class="badge bg-warning text-dark">Admin</span>
+                            {{/if}}
+                        {{else}}
+                            &mdash;
+                        {{/if}}
+                    </td>
                     <td>{{last_login}}</td>
                 </tr>
                 {{else}}

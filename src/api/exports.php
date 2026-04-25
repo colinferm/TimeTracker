@@ -245,11 +245,19 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     require_once __DIR__ . '/lib/vendor/setasign/fpdf/fpdf.php';
 
     $stmt = $db->prepare(
-        'SELECT i.*, c.name AS client_name, c.address_1, c.address_2,
+        'SELECT i.id, i.client_id, i.project_id, i.paid_date, i.is_billed, 
+                i.invoice_total, i.invoice_number, i.billed_date, i.created,
+                c.name AS client_name, c.address_1, c.address_2,
                 c.city, c.state_province, c.postal_code, c.bill_rate AS client_bill_rate,
-                c.invoice_services, c.invoice_line_item
+                c.invoice_services, c.invoice_line_item,
+                o.name AS org_name, o.address_1 AS org_address_1, o.address_2 AS org_address_2,
+                o.city AS org_city, o.state_province AS org_state_province, 
+                o.postal_code AS org_postal_code, o.country AS org_country,
+                o.phone_number AS org_phone_number, u.first_name, u.last_name
          FROM tt_invoice i
          LEFT JOIN tt_client c ON c.id = i.client_id
+         LEFT JOIN tt_organization o ON o.id = c.organization_id
+         LEFT JOIN tt_user u ON u.id = o.primary_user_id
          WHERE i.id = ?'
     );
     $stmt->execute([$args['id']]);
@@ -275,11 +283,11 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     $records = $recStmt->fetchAll();
 
     // Business identity
-    $bizLine1   = 'Colin Andrew Ferm';
-    $bizLine2   = '68 Jay St. #508';
-    $bizLine3   = 'Brooklyn, NY 11201';
-    $bizLine4   = 'Colin Ferm';
-    $bizLine5   = 'c: 917.805.5914';
+    $bizLine1   = $invoice['first_name']." ".$invoice['last_name'];
+    $bizLine2   = $invoice['org_address_1'];
+    $bizLine3   = $invoice['org_city'].", ".$invoice['org_state_province']." ".$invoice['org_postal_code'];
+    //$bizLine4   = 'Colin Ferm';
+    $bizLine5   = 'ph: '.$invoice['org_phone_number'];
     $bizTagline = $invoice['invoice_catch_phrase'] ?? '';
 
     $pdf = new FPDF('P', 'mm', 'A4');
@@ -324,7 +332,7 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     $pdf->SetFont('Arial', '', 10);
     $pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, $bizLine2, 0, 0, 'L'); $leftY += 5;
     $pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, $bizLine3, 0, 0, 'L'); $leftY += 8;
-    $pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, $bizLine4, 0, 0, 'L'); $leftY += 5;
+    //$pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, $bizLine4, 0, 0, 'L'); $leftY += 5;
     $pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, $bizLine5, 0, 0, 'L'); $leftY += 8;
     $pdf->SetXY(15, $leftY); $pdf->Cell(85, 5, 'Invoice #: ' . $invoice['invoice_number'], 0, 0, 'L');
 
@@ -525,7 +533,7 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
 
     $tsHeaderY = 32;
     $tsRowH    = 7;
-    $colW      = [35, 22, 68, 35, 20];
+    $colW      = [30, 22, 68, 35, 20];
 
     $pdf->SetFillColor(50, 50, 50);
     $pdf->Rect(15, $tsHeaderY, 180, 8, 'F');
@@ -546,7 +554,7 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
 
     foreach ($records as $rec) {
         $pdf->SetXY(17, $tsRowY + 1);
-        $pdf->Cell($colW[0], 5, $bizLine4, 0, 0, 'L');
+        $pdf->Cell($colW[0], 5, 'Colin Ferm', 0, 0, 'L');
         $pdf->Cell($colW[1], 5, date('n/j/Y', strtotime($rec['work_date'])), 0, 0, 'L');
         $pdf->Cell($colW[2], 5, mb_substr($rec['work_desc'] ?? '', 0, 55), 0, 0, 'L');
         $pdf->Cell($colW[3], 5, mb_substr($rec['project_name'] ?? '', 0, 28), 0, 0, 'L');

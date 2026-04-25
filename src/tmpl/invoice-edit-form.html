@@ -23,6 +23,9 @@
     </div>
 </div>
 {{/if}}
+<div class="mb-3">
+    <a href="/api/exports/invoices/{{invoice.id}}/pdf">Download Invoice PDF</a>
+</div>
 <div class="form-floating mb-3">
     <input type="date" name="paid_date" id="invoice-paid-date" class="form-control" value="{{invoice.paid_date}}" placeholder=" ">
     <label for="invoice-paid-date">Paid Date</label>

@@ -55,6 +55,11 @@ $loginUser = function (Request $request, Response $response) use ($db, $jwtConfi
 $listUsers = function (Request $request, Response $response) use ($db): Response {
     $stmt = $db->query('SELECT id, username, email_address, first_name, last_name, country, confirmed, is_admin, is_superuser, registered, last_login FROM tt_user ORDER BY last_name, first_name');
     $users = $stmt->fetchAll();
+    foreach($users as &$user) {
+        $orgStmt = $db->prepare('SELECT organization_id FROM tt_organization_user_map WHERE user_id = ?');
+        $orgStmt->execute([$user['id']]);
+        $user['organization_ids'] = array_column($orgStmt->fetchAll(), 'organization_id');
+    }
     $response->getBody()->write(json_encode($users));
     return $response->withHeader('Content-Type', 'application/json');
 };

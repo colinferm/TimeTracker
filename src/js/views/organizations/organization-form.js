@@ -9,6 +9,10 @@ TimeTracker.Views.Organizations.Form = Backbone.View.extend({
 		this.model = options.model;
 		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
 		this.template = Handlebars.compile(html);
+
+		this.users = new TimeTracker.Collections.Users();
+		this.listenTo(this.users, 'reset sync', this.renderUserSelect);
+		this.users.fetch({ reset: true });
 	},
 
 	render: function() {
@@ -16,10 +20,24 @@ TimeTracker.Views.Organizations.Form = Backbone.View.extend({
 		return this;
 	},
 
+	renderUserSelect: function() {
+		var currentUserId = this.model.get('primary_user_id');
+		var $select = this.$('[name=primary_user_id]');
+		$select.empty();
+		$select.append('<option value="">-- No Primary User --</option>');
+		this.users.each(function(u) {
+			var name = (u.get('first_name') + ' ' + u.get('last_name')).trim() || u.get('username');
+			var selected = (u.get('id') == currentUserId) ? ' selected' : '';
+			$select.append('<option value="' + u.get('id') + '"' + selected + '>' + name + '</option>');
+		});
+	},
+
 	doSave: function(callback) {
 		var self = this;
 		var data = {
+			primary_user_id: parseInt(this.$('[name=primary_user_id]').val()) || null,
 			name: this.$('[name=name]').val().trim(),
+			phone_number: this.$('[name=phone_number]').val().trim(),
 			address_1: this.$('[name=address_1]').val().trim(),
 			address_2: this.$('[name=address_2]').val().trim(),
 			city: this.$('[name=city]').val().trim(),
