@@ -7,6 +7,7 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 		'projects': 'projects',
 		'reports': 'reports',
 		'invoices': 'invoices',
+		'organizations': 'organizations',
 		'users': 'users'
 	},
 
@@ -32,6 +33,10 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 
 	invoices: function() {
 		app.showView(new TimeTracker.Views.Invoices.List());
+	},
+
+	organizations: function() {
+		app.showView(new TimeTracker.Views.Organizations.List());
 	},
 
 	users: function() {

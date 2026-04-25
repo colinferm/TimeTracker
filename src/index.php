@@ -13,6 +13,7 @@
 
     <style>
         body { background-color: #f8f9fa; }
+        .table-responsive { min-height: 500px; }
         .calendar-table tr { height: 100px; }
         .calendar-table thead tr { height: 40px; }
         .calendar-table td { cursor: pointer; width: 14%; }

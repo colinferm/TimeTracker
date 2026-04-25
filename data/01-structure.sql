@@ -13,6 +13,7 @@ CREATE TABLE tt_user (
 	registered DATETIME NOT NULL,
 	last_login DATETIME NOT NULL,
 	is_admin TINYINT NOT NULL DEFAULT '0',
+	is_superuser TINYINT NOT NULL DEFAULT '0',
 	oauth_key VARCHAR(255),
 	nonce_key VARCHAR(255),
 	PRIMARY KEY (id),
@@ -22,9 +23,31 @@ CREATE TABLE tt_user (
 INSERT INTO tt_user (username, userpassword, email_address, confirmed, registered, last_login, is_admin)
 VALUES ('colin', '$2y$10$a2gV2.OC.tEPC9EKXEyzo.bdaFkA.NgIO2pRon8iz4jEdgwdXmM4S', 'colin@fortytwosolutions.com', 1, NOW(), NOW(), 1);
 
+DROP TABLE IF EXIST tt_organization;
+CREATE TABLE tt_organization (
+	id INT NOT NULL AUTO_INCREMENT,
+	name VARCHAR(255) NOT NULL,
+	address_1 VARCHAR(255),
+	address_2 VARCHAR(255),
+	city VARCHAR(255),
+	state_province VARCHAR(10),
+	postal_code VARCHAR(15),
+	country VARCHAR(200),
+	PRIMARY KEY (id)
+);
+INSERT INTO tt_organization (id, name) VALUES (1, '42 Solutions');
+
+DROP TABLE IF EXIST tt_organization_user_map;
+CREATE TABLE tt_organization_user_map (
+	organization_id INT NOT NULL,
+	user_id INT NOT NULL,
+	INDEX idx_org_user (organization_id, user_id)
+)
+
 DROP TABLE IF EXISTS tt_client;
 CREATE TABLE tt_client (
 	id INT NOT NULL AUTO_INCREMENT,
+	client_id INT DEFAULT '0',
 	name VARCHAR(200) NOT NULL,
 	primary_contact VARCHAR(255),
 	address_1 VARCHAR(255),

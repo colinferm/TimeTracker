@@ -14,17 +14,31 @@
                     <th>Invoice Total</th>
                     <th>Billed</th>
                     <th>Paid Date</th>
+					<th></th>
                 </tr>
             </thead>
             <tbody>
                 {{#each invoices}}
                 <tr>
                     <td>{{invoice_number}}</td>
-                    <td><a href="#" class="invoice-date-link fw-semibold" data-id="{{id}}">{{created}}</a></td>
+                    <td><a class="invoice-date-link fw-semibold" data-id="{{id}}">{{created}}</a></td>
                     <td>{{client_name}}</td>
                     <td>${{invoice_total}}</td>
                     <td>{{#if is_billed}}<span class="badge bg-success">Yes</span>{{else}}<span class="badge bg-secondary">No</span>{{/if}}</td>
                     <td>{{#if paid_date}}{{paid_date}}{{else}}&mdash;{{/if}}</td>
+                    <td class="d-flex justify-content-center">
+                        <div class="btn-group" role="group">
+                            <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            Action
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                <li class="d-flex flex-row align-items-start p-1 action_edit" data-id="{{id}}"><i class="fi-info ms-1 me-2"></i> <span>Edit</span></li>
+								{{#unless is_billed}}
+                                <li class="d-flex flex-row align-items-start p-1 action_remove" data-id="{{id}}"><i class="fi-trash ms-1 me-2"></i> <span>Delete</span></li>
+								{{/unless}}
+                            </ul>
+                        </div>
+                    </td>
                 </tr>
                 {{else}}
                 <tr>

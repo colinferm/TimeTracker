@@ -16,6 +16,7 @@ var paths = {
             '/var/www/html/js/utils/router.js',
             '/var/www/html/js/models/user/**/*.js',
             '/var/www/html/js/models/client/**/*.js',
+            '/var/www/html/js/models/organization/**/*.js',
             '/var/www/html/js/views/**/*.js'
         ],
         dest:   '/var/www/html/js/',

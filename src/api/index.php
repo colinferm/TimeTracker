@@ -90,6 +90,7 @@ require_once __DIR__ . '/user.php';
 require_once __DIR__ . '/client.php';
 require_once __DIR__ . '/hours.php';
 require_once __DIR__ . '/exports.php';
+require_once __DIR__ . '/organization.php';
 
 $app->setBasePath('/api');
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -135,6 +136,14 @@ $app->get('/exports/pdf',   $exportPdf)->add($authMiddleware);
 $app->get('/exports/invoices', $listInvoices)->add($authMiddleware);
 $app->post('/exports/invoice', $createInvoice)->add($authMiddleware);
 $app->put('/exports/invoices/{id}', $updateInvoice)->add($authMiddleware);
+$app->delete('/exports/invoices/{id}', $deleteInvoice)->add($authMiddleware);
 $app->get('/exports/invoices/{id}/pdf', $generateInvoicePdf)->add($authMiddleware);
+
+// ─── Organizations ─────────────────────────────────────────────────────────────
+$app->get('/organizations', $listOrganizations)->add($authMiddleware);
+$app->post('/organizations', $createOrganization)->add($authMiddleware);
+$app->get('/organizations/{id}', $getOrganization)->add($authMiddleware);
+$app->put('/organizations/{id}', $updateOrganization)->add($authMiddleware);
+$app->delete('/organizations/{id}', $deleteOrganization)->add($authMiddleware);
 
 $app->run();

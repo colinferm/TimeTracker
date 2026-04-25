@@ -174,13 +174,15 @@ $createInvoice = function(Request $request, Response $response) use ($db): Respo
     }
 
     $db->prepare(
-        'INSERT INTO tt_invoice (client_id, project_id, invoice_number, invoice_total, billed_date, is_billed, created, modified)
-         VALUES (?, ?, ?, ?, NULL, 0, NOW(), NOW())'
+        'INSERT INTO tt_invoice (client_id, project_id, invoice_number, invoice_total, invoice_catch_phrase, due_date, billed_date, is_billed, created, modified)
+         VALUES (?, ?, ?, ?, ?, ?, NULL, 0, NOW(), NOW())'
     )->execute([
         $data['client_id'],
         $data['project_id'] ?? null,
         $invoiceNumber,
         round($total, 2),
+        $data['invoice_catch_phrase'] ?? '',
+        $data['due_date'] ?? null,
     ]);
     $invoiceId = (int)$db->lastInsertId();
 
@@ -259,7 +261,7 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     }
 
     $recStmt = $db->prepare(
-        'SELECT r.num_hours, r.work_desc, r.project_id, c.name AS client_name, p.name AS project_name,
+        'SELECT r.num_hours, r.work_date, r.work_desc, r.project_id, c.name AS client_name, p.name AS project_name,
                 c.bill_rate AS client_bill_rate, p.bill_rate AS project_bill_rate,
                 p.invoice_line_item AS project_line_item
          FROM tt_invoice_record_map m
@@ -278,7 +280,7 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     $bizLine3   = 'Brooklyn, NY 11201';
     $bizLine4   = 'Colin Ferm';
     $bizLine5   = 'c: 917.805.5914';
-    $bizTagline = 'We are ready to believe you!';
+    $bizTagline = $invoice['invoice_catch_phrase'] ?? '';
 
     $pdf = new FPDF('P', 'mm', 'A4');
     $pdf->AddPage();
@@ -372,6 +374,18 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     $dateStr = $invoice['created'] ? date('n/j/Y', strtotime($invoice['created'])) : date('n/j/Y');
     $pdf->Cell(68, 5, $dateStr, 0, 0, 'L');
     $rightY += 7;
+
+    // Due Date
+    if (!empty($invoice['due_date'])) {
+        $pdf->SetXY(105, $rightY);
+        $pdf->SetTextColor(140, 140, 140);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(22, 5, 'Due Date:', 0, 0, 'L');
+        $pdf->SetTextColor(0, 0, 0);
+        $pdf->SetFont('Arial', '', 10);
+        $pdf->Cell(68, 5, date('d/m/Y', strtotime($invoice['due_date'])), 0, 0, 'L');
+        $rightY += 7;
+    }
 
     // For
     $pdf->SetXY(105, $rightY);
@@ -495,6 +509,61 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     $pdf->SetXY(15, $summaryY + ($rowH * 3));
     $pdf->Cell(100, $rowH, $bizTagline, 0, 0, 'L');
 
+    // ── Page 2: Timesheet ────────────────────────────────────────────────────
+    $pdf->AddPage();
+    $pdf->SetMargins(15, 15, 15);
+
+    $pdf->SetFont('Arial', 'B', 18);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetXY(15, 15);
+    $pdf->Cell(180, 10, 'Timesheet', 0, 1, 'L');
+
+    $pdf->SetDrawColor(0, 0, 0);
+    $pdf->SetLineWidth(0.5);
+    $pdf->Line(15, 28, 195, 28);
+    $pdf->SetLineWidth(0.2);
+
+    $tsHeaderY = 32;
+    $tsRowH    = 7;
+    $colW      = [35, 22, 68, 35, 20];
+
+    $pdf->SetFillColor(50, 50, 50);
+    $pdf->Rect(15, $tsHeaderY, 180, 8, 'F');
+
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetXY(17, $tsHeaderY + 2);
+    $pdf->Cell($colW[0], 5, 'Consultant', 0, 0, 'L');
+    $pdf->Cell($colW[1], 5, 'Date', 0, 0, 'L');
+    $pdf->Cell($colW[2], 5, 'Description', 0, 0, 'L');
+    $pdf->Cell($colW[3], 5, 'Project', 0, 0, 'L');
+    $pdf->Cell($colW[4], 5, 'Hours', 0, 0, 'R');
+
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(0, 0, 0);
+    $tsRowY      = $tsHeaderY + 8;
+    $tsTotalHours = 0.0;
+
+    foreach ($records as $rec) {
+        $pdf->SetXY(17, $tsRowY + 1);
+        $pdf->Cell($colW[0], 5, $bizLine4, 0, 0, 'L');
+        $pdf->Cell($colW[1], 5, date('n/j/Y', strtotime($rec['work_date'])), 0, 0, 'L');
+        $pdf->Cell($colW[2], 5, mb_substr($rec['work_desc'] ?? '', 0, 55), 0, 0, 'L');
+        $pdf->Cell($colW[3], 5, mb_substr($rec['project_name'] ?? '', 0, 28), 0, 0, 'L');
+        $pdf->Cell($colW[4], 5, number_format((float)$rec['num_hours'], 2), 0, 0, 'R');
+        $tsTotalHours += (float)$rec['num_hours'];
+        $tsRowY += $tsRowH;
+        $pdf->SetDrawColor(210, 210, 210);
+        $pdf->Line(15, $tsRowY, 195, $tsRowY);
+        $pdf->SetDrawColor(0, 0, 0);
+    }
+
+    $pdf->SetFillColor(200, 200, 200);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetXY(15, $tsRowY);
+    $pdf->Cell(160, $tsRowH, 'Total Hours', 1, 0, 'R', true);
+    $pdf->Cell(20, $tsRowH, number_format($tsTotalHours, 2), 1, 0, 'R', true);
+
     $filename = 'invoice-' . $invoice['invoice_number'] . '.pdf';
     $content  = $pdf->Output('S');
 
@@ -502,4 +571,18 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     return $response
         ->withHeader('Content-Type', 'application/pdf')
         ->withHeader('Content-Disposition', 'inline; filename="' . $filename . '"');
+};
+
+$deleteInvoice = function(Request $request, Response $response, array $args) use ($db): Response {
+    $data = $request->getParsedBody() ?? [];
+    $itemId = $args['id'];
+
+    $deleteMapSQL = "DELETE FROM tt_invoice_record_map WHERE invoice_id = ?";
+    $db->prepare($deleteMapSQL)->execute($deleteMapSQL);
+
+    $deleteInvoiceSQL = "DELETE FROM tt_invoice WHERE id = ?";
+    $db->prepare($deleteInvoiceSQL)->execute($deleteInvoiceSQL);
+
+    $response->getBody()->write(json_encode(['message' => 'Invoice deleted']));
+    return $response->withHeader('Content-Type', 'application/json');
 };

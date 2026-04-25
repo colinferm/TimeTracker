@@ -8,7 +8,8 @@ TimeTracker.Models.User = Backbone.Model.extend({
 		last_name: '',
 		country: '',
 		confirmed: 0,
-		is_admin: 0
+		is_admin: 0,
+		is_superuser: 0
 	}
 });
 

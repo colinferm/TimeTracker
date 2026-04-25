@@ -42,6 +42,7 @@ $loginUser = function (Request $request, Response $response) use ($db, $jwtConfi
             'last_name' => $user['last_name'],
             'email_address' => $user['email_address'],
             'is_admin' => (int)$user['is_admin'],
+            'is_superuser' => (int)$user['is_superuser'],
         ],
     ];
 
@@ -52,7 +53,7 @@ $loginUser = function (Request $request, Response $response) use ($db, $jwtConfi
 };
 
 $listUsers = function (Request $request, Response $response) use ($db): Response {
-    $stmt = $db->query('SELECT id, username, email_address, first_name, last_name, country, confirmed, is_admin, registered, last_login FROM tt_user ORDER BY last_name, first_name');
+    $stmt = $db->query('SELECT id, username, email_address, first_name, last_name, country, confirmed, is_admin, is_superuser, registered, last_login FROM tt_user ORDER BY last_name, first_name');
     $users = $stmt->fetchAll();
     $response->getBody()->write(json_encode($users));
     return $response->withHeader('Content-Type', 'application/json');
@@ -70,8 +71,8 @@ $createUser = function (Request $request, Response $response) use ($db): Respons
 
     $hash = password_hash($data['password'], PASSWORD_DEFAULT);
     $stmt = $db->prepare(
-        'INSERT INTO tt_user (username, userpassword, email_address, first_name, last_name, country, is_admin, confirmed, registered, last_login)
-         VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())'
+        'INSERT INTO tt_user (username, userpassword, email_address, first_name, last_name, country, is_admin, is_superuser, confirmed, registered, last_login)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW(), NOW())'
     );
     $stmt->execute([
         $data['username'],
@@ -81,14 +82,26 @@ $createUser = function (Request $request, Response $response) use ($db): Respons
         $data['last_name'] ?? '',
         $data['country'] ?? '',
         (int)($data['is_admin'] ?? 0),
+        (int)($data['is_superuser'] ?? 0),
     ]);
 
-    $response->getBody()->write(json_encode(['id' => (int)$db->lastInsertId(), 'message' => 'User created']));
+    $newId = (int)$db->lastInsertId();
+
+    if (!empty($data['organization_ids'])) {
+        foreach ((array)$data['organization_ids'] as $orgId) {
+            $orgId = (int)$orgId;
+            if ($orgId > 0) {
+                $db->prepare('INSERT INTO tt_organization_user_map (organization_id, user_id) VALUES (?, ?)')->execute([$orgId, $newId]);
+            }
+        }
+    }
+
+    $response->getBody()->write(json_encode(['id' => $newId, 'message' => 'User created']));
     return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
 };
 
 $getUser = function (Request $request, Response $response, array $args) use ($db): Response {
-    $stmt = $db->prepare('SELECT id, username, email_address, first_name, last_name, country, confirmed, is_admin, registered, last_login FROM tt_user WHERE id = ?');
+    $stmt = $db->prepare('SELECT id, username, email_address, first_name, last_name, country, confirmed, is_admin, is_superuser, registered, last_login FROM tt_user WHERE id = ?');
     $stmt->execute([$args['id']]);
     $user = $stmt->fetch();
 
@@ -96,6 +109,10 @@ $getUser = function (Request $request, Response $response, array $args) use ($db
         $response->getBody()->write(json_encode(['error' => 'User not found']));
         return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
     }
+
+    $orgStmt = $db->prepare('SELECT organization_id FROM tt_organization_user_map WHERE user_id = ?');
+    $orgStmt->execute([$args['id']]);
+    $user['organization_ids'] = array_column($orgStmt->fetchAll(), 'organization_id');
 
     $response->getBody()->write(json_encode($user));
     return $response->withHeader('Content-Type', 'application/json');
@@ -106,7 +123,7 @@ $updateUser = function (Request $request, Response $response, array $args) use (
     $fields = [];
     $values = [];
 
-    foreach (['email_address', 'first_name', 'last_name', 'country', 'is_admin'] as $field) {
+    foreach (['email_address', 'first_name', 'last_name', 'country', 'is_admin', 'is_superuser'] as $field) {
         if (array_key_exists($field, $data)) {
             $fields[] = "{$field} = ?";
             $values[] = $data[$field];
@@ -125,6 +142,16 @@ $updateUser = function (Request $request, Response $response, array $args) use (
 
     $values[] = $args['id'];
     $db->prepare('UPDATE tt_user SET ' . implode(', ', $fields) . ' WHERE id = ?')->execute($values);
+
+    if (array_key_exists('organization_ids', $data)) {
+        $db->prepare('DELETE FROM tt_organization_user_map WHERE user_id = ?')->execute([$args['id']]);
+        foreach ((array)$data['organization_ids'] as $orgId) {
+            $orgId = (int)$orgId;
+            if ($orgId > 0) {
+                $db->prepare('INSERT INTO tt_organization_user_map (organization_id, user_id) VALUES (?, ?)')->execute([$orgId, $args['id']]);
+            }
+        }
+    }
 
     $response->getBody()->write(json_encode(['message' => 'User updated']));
     return $response->withHeader('Content-Type', 'application/json');

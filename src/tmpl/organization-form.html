@@ -1,0 +1,41 @@
+<form id="organization-form">
+    <div class="alert alert-danger form-error mb-3" style="display:none;">
+        An error occurred while saving. Please try again.
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="name" id="org-name" class="form-control" value="{{organization.name}}" placeholder="Organization Name" required>
+        <label for="org-name">Organization Name <span class="text-danger">*</span></label>
+    </div>
+    <div class="form-floating mb-2">
+        <input type="text" name="address_1" id="org-address-1" class="form-control" value="{{organization.address_1}}" placeholder="Address Line 1">
+        <label for="org-address-1">Address Line 1</label>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="address_2" id="org-address-2" class="form-control" value="{{organization.address_2}}" placeholder="Address Line 2">
+        <label for="org-address-2">Address Line 2</label>
+    </div>
+    <div class="row">
+        <div class="col-md-5 mb-3">
+            <div class="form-floating">
+                <input type="text" name="city" id="org-city" class="form-control" value="{{organization.city}}" placeholder="City">
+                <label for="org-city">City</label>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="form-floating">
+                <input type="text" name="state_province" id="org-state" class="form-control" value="{{organization.state_province}}" placeholder="State / Province">
+                <label for="org-state">State</label>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="form-floating">
+                <input type="text" name="postal_code" id="org-postal" class="form-control" value="{{organization.postal_code}}" placeholder="Postal Code">
+                <label for="org-postal">Postal Code</label>
+            </div>
+        </div>
+    </div>
+    <div class="form-floating mb-3">
+        <input type="text" name="country" id="org-country" class="form-control" value="{{organization.country}}" placeholder="Country">
+        <label for="org-country">Country</label>
+    </div>
+</form>

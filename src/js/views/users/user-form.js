@@ -9,11 +9,25 @@ TimeTracker.Views.Users.Form = Backbone.View.extend({
 		this.model = options.model;
 		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
 		this.template = Handlebars.compile(html);
+
+		this.organizations = new TimeTracker.Collections.Organizations();
+		this.listenTo(this.organizations, 'reset sync', this.renderOrgSelect);
+		this.organizations.fetch({ reset: true });
 	},
 
 	render: function() {
 		this.$el.html(this.template({ user: this.model.toJSON(), isNew: this.model.isNew() }));
 		return this;
+	},
+
+	renderOrgSelect: function() {
+		var currentIds = (this.model.get('organization_ids') || []).map(String);
+		var $select = this.$('[name=organization_ids]');
+		$select.empty();
+		this.organizations.each(function(o) {
+			var selected = currentIds.indexOf(String(o.get('id'))) !== -1 ? ' selected' : '';
+			$select.append('<option value="' + o.get('id') + '"' + selected + '>' + o.get('name') + '</option>');
+		});
 	},
 
 	doSave: function(callback) {
@@ -25,7 +39,9 @@ TimeTracker.Views.Users.Form = Backbone.View.extend({
 			last_name: this.$('[name=last_name]').val().trim(),
 			country: this.$('[name=country]').val().trim(),
 			confirmed: this.$('[name=confirmed]').is(':checked') ? 1 : 0,
-			is_admin: this.$('[name=is_admin]').is(':checked') ? 1 : 0
+			is_admin: this.$('[name=is_admin]').is(':checked') ? 1 : 0,
+			is_superuser: this.$('[name=is_superuser]').is(':checked') ? 1 : 0,
+			organization_ids: this.$('[name=organization_ids]').val() || []
 		};
 
 		var password = this.$('[name=password]').val();

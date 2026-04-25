@@ -7,7 +7,9 @@ TimeTracker.Views.Invoices.List = Backbone.View.extend({
 
 	events: {
 		'click .btn-create-invoice': 'createInvoice',
-		'click .invoice-date-link': 'editInvoice'
+		'click .invoice-date-link': 'editInvoice',
+		'click .action_edit': 'editInvoice',
+		'click .action_remove': 'deleteInvoice'
 	},
 
 	initialize: function() {
@@ -51,5 +53,14 @@ TimeTracker.Views.Invoices.List = Backbone.View.extend({
 				self.collection.fetch({ reset: true });
 			}
 		});
+	},
+
+	deleteInvoice: function(e) {
+		e.preventDefault();
+		var self = this;
+		var id = $(e.currentTarget).data('id');
+		var model = this.collection.get(id);
+		if (!model) return;
+		model.destroy();
 	}
 });

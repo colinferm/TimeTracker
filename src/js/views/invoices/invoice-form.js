@@ -52,7 +52,9 @@ TimeTracker.Views.Invoices.Form = Backbone.View.extend({
 			client_id: this.$('[name=client_id]').val(),
 			project_id: this.$('[name=project_id]').val() || null,
 			start_date: this.$('[name=start_date]').val(),
-			end_date: this.$('[name=end_date]').val()
+			end_date: this.$('[name=end_date]').val(),
+			due_date: this.$('[name=due_date]').val() || null,
+			invoice_catch_phrase: this.$('[name=invoice_catch_phrase]').val().trim()
 		};
 		this.$('.form-error').hide();
 		$.ajax({

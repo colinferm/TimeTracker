@@ -7,6 +7,12 @@
         <label for="client-name">Client Name <span class="text-danger">*</span></label>
     </div>
     <div class="form-floating mb-3">
+        <select name="organization_id" id="client-organization" class="form-control">
+            <option value="">-- No Organization --</option>
+        </select>
+        <label for="client-organization">Organization</label>
+    </div>
+    <div class="form-floating mb-3">
         <input type="text" name="invoice_services" id="client-invoice-services" class="form-control" value="{{client.invoice_services}}" placeholder="Invoice Services Description">
         <label for="client-invoice-services">Invoice Services Description</label>
     </div>
@@ -36,7 +42,7 @@
         <div class="col-md-3 mb-3">
             <div class="form-floating">
                 <input type="text" name="state_province" id="client-state" class="form-control" value="{{client.state_province}}" placeholder="State / Province">
-                <label for="client-state">State / Province</label>
+                <label for="client-state">State</label>
             </div>
         </div>
         <div class="col-md-4 mb-3">

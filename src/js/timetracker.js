@@ -1,4 +1,4 @@
-/* TimeTracker – Compiled: 2026-04-24, 19:13:29.1 */
+/* TimeTracker – Compiled: 2026-04-25, 10:25:45.3 */
 var TimeTracker = {
 	Apps: {
 		Data: {}
@@ -332,6 +332,7 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 		'projects': 'projects',
 		'reports': 'reports',
 		'invoices': 'invoices',
+		'organizations': 'organizations',
 		'users': 'users'
 	},
 
@@ -357,6 +358,10 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 
 	invoices: function() {
 		app.showView(new TimeTracker.Views.Invoices.List());
+	},
+
+	organizations: function() {
+		app.showView(new TimeTracker.Views.Organizations.List());
 	},
 
 	users: function() {
@@ -444,7 +449,8 @@ TimeTracker.Models.User = Backbone.Model.extend({
 		last_name: '',
 		country: '',
 		confirmed: 0,
-		is_admin: 0
+		is_admin: 0,
+		is_superuser: 0
 	}
 });
 
@@ -540,6 +546,25 @@ TimeTracker.Models.Client.TimeRecord = Backbone.Model.extend({
 TimeTracker.Collections.Client.TimeRecords = Backbone.Collection.extend({
 	model: TimeTracker.Models.Client.TimeRecord,
 	url: '/api/hours'
+});
+
+TimeTracker.Models.Organization = Backbone.Model.extend({
+	urlRoot: '/api/organizations',
+
+	defaults: {
+		name: '',
+		address_1: '',
+		address_2: '',
+		city: '',
+		state_province: '',
+		postal_code: '',
+		country: ''
+	}
+});
+
+TimeTracker.Collections.Organizations = Backbone.Collection.extend({
+	model: TimeTracker.Models.Organization,
+	url: '/api/organizations'
 });
 
 TimeTracker.Views.Calendar = Backbone.View.extend({
@@ -997,6 +1022,10 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 		this.model = options.model;
 		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
 		this.template = Handlebars.compile(html);
+
+		this.organizations = new TimeTracker.Collections.Organizations();
+		this.listenTo(this.organizations, 'reset sync', this.renderOrgSelect);
+		this.organizations.fetch({ reset: true });
 	},
 
 	render: function() {
@@ -1004,6 +1033,17 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 		if (this.model.attributes.start_date == null) this.model.attributes.start_date = new Date().toISOString().split('T')[0];
 		this.$el.html(this.template({ client: this.model.toJSON(), isNew: this.model.isNew() }));
 		return this;
+	},
+
+	renderOrgSelect: function() {
+		var currentOrgId = this.model.get('organization_id');
+		var $select = this.$('[name=organization_id]');
+		$select.empty();
+		$select.append('<option value="">-- No Organization --</option>');
+		this.organizations.each(function(o) {
+			var selected = (o.get('id') == currentOrgId) ? ' selected' : '';
+			$select.append('<option value="' + o.get('id') + '"' + selected + '>' + o.get('name') + '</option>');
+		});
 	},
 
 	doSave: function(callback) {
@@ -1021,7 +1061,8 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 			start_date: this.$('[name=start_date]').val(),
 			end_date: this.$('[name=end_date]').val() || null,
 			invoice_services: this.$('[name=invoice_services]').val().trim(),
-			invoice_line_item: this.$('[name=invoice_line_item]').val().trim()
+			invoice_line_item: this.$('[name=invoice_line_item]').val().trim(),
+			organization_id: parseInt(this.$('[name=organization_id]').val()) || null
 		};
 
 		this.$('.form-error').hide();
@@ -1172,7 +1213,9 @@ TimeTracker.Views.Invoices.Form = Backbone.View.extend({
 			client_id: this.$('[name=client_id]').val(),
 			project_id: this.$('[name=project_id]').val() || null,
 			start_date: this.$('[name=start_date]').val(),
-			end_date: this.$('[name=end_date]').val()
+			end_date: this.$('[name=end_date]').val(),
+			due_date: this.$('[name=due_date]').val() || null,
+			invoice_catch_phrase: this.$('[name=invoice_catch_phrase]').val().trim()
 		};
 		this.$('.form-error').hide();
 		$.ajax({
@@ -1196,7 +1239,9 @@ TimeTracker.Views.Invoices.List = Backbone.View.extend({
 
 	events: {
 		'click .btn-create-invoice': 'createInvoice',
-		'click .invoice-date-link': 'editInvoice'
+		'click .invoice-date-link': 'editInvoice',
+		'click .action_edit': 'editInvoice',
+		'click .action_remove': 'deleteInvoice'
 	},
 
 	initialize: function() {
@@ -1236,6 +1281,107 @@ TimeTracker.Views.Invoices.List = Backbone.View.extend({
 			class: 'TimeTracker.Views.Invoices.EditForm',
 			model: model,
 			buttonText: 'Save Changes',
+			callback: function() {
+				self.collection.fetch({ reset: true });
+			}
+		});
+	},
+
+	deleteInvoice: function(e) {
+		e.preventDefault();
+		var self = this;
+		var id = $(e.currentTarget).data('id');
+		var model = this.collection.get(id);
+		if (!model) return;
+		model.destroy();
+	}
+});
+
+TimeTracker.Views.Organizations = TimeTracker.Views.Organizations || {};
+
+TimeTracker.Views.Organizations.Form = Backbone.View.extend({
+	tagName: 'div',
+	className: 'organization-form-view',
+	templateName: 'organization-form',
+
+	initialize: function(options) {
+		this.model = options.model;
+		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
+		this.template = Handlebars.compile(html);
+	},
+
+	render: function() {
+		this.$el.html(this.template({ organization: this.model.toJSON(), isNew: this.model.isNew() }));
+		return this;
+	},
+
+	doSave: function(callback) {
+		var self = this;
+		var data = {
+			name: this.$('[name=name]').val().trim(),
+			address_1: this.$('[name=address_1]').val().trim(),
+			address_2: this.$('[name=address_2]').val().trim(),
+			city: this.$('[name=city]').val().trim(),
+			state_province: this.$('[name=state_province]').val().trim(),
+			postal_code: this.$('[name=postal_code]').val().trim(),
+			country: this.$('[name=country]').val().trim()
+		};
+
+		this.$('.form-error').hide();
+
+		this.model.save(data, {
+			success: function() { callback(true, self.model); },
+			error: function() {
+				self.$('.form-error').show();
+				callback(false);
+			}
+		});
+	}
+});
+
+TimeTracker.Views.Organizations = TimeTracker.Views.Organizations || {};
+
+TimeTracker.Views.Organizations.List = Backbone.View.extend({
+	tagName: 'div',
+	className: 'organization-list-view',
+	templateName: 'organization-list',
+
+	events: {
+		'click .org-name-link': 'editOrg',
+		'click .btn-add-organization': 'addOrg'
+	},
+
+	initialize: function() {
+		this.collection = new TimeTracker.Collections.Organizations();
+		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
+		this.template = Handlebars.compile(html);
+		this.listenTo(this.collection, 'reset sync', this.render);
+		this.collection.fetch({ reset: true });
+	},
+
+	render: function() {
+		this.$el.html(this.template({ organizations: this.collection.toJSON() }));
+		return this;
+	},
+
+	editOrg: function(e) {
+		e.preventDefault();
+		var id = $(e.currentTarget).data('id');
+		var model = this.collection.get(id);
+		if (model) this.openModal(model);
+	},
+
+	addOrg: function() {
+		this.openModal(new TimeTracker.Models.Organization());
+	},
+
+	openModal: function(model) {
+		var self = this;
+		new TimeTracker.Views.Modal({
+			title: model.isNew() ? 'Add Organization' : 'Edit Organization',
+			class: 'TimeTracker.Views.Organizations.Form',
+			model: model,
+			buttonText: model.isNew() ? 'Create Organization' : 'Save Changes',
 			callback: function() {
 				self.collection.fetch({ reset: true });
 			}
@@ -1355,11 +1501,25 @@ TimeTracker.Views.Users.Form = Backbone.View.extend({
 		this.model = options.model;
 		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
 		this.template = Handlebars.compile(html);
+
+		this.organizations = new TimeTracker.Collections.Organizations();
+		this.listenTo(this.organizations, 'reset sync', this.renderOrgSelect);
+		this.organizations.fetch({ reset: true });
 	},
 
 	render: function() {
 		this.$el.html(this.template({ user: this.model.toJSON(), isNew: this.model.isNew() }));
 		return this;
+	},
+
+	renderOrgSelect: function() {
+		var currentIds = (this.model.get('organization_ids') || []).map(String);
+		var $select = this.$('[name=organization_ids]');
+		$select.empty();
+		this.organizations.each(function(o) {
+			var selected = currentIds.indexOf(String(o.get('id'))) !== -1 ? ' selected' : '';
+			$select.append('<option value="' + o.get('id') + '"' + selected + '>' + o.get('name') + '</option>');
+		});
 	},
 
 	doSave: function(callback) {
@@ -1371,7 +1531,9 @@ TimeTracker.Views.Users.Form = Backbone.View.extend({
 			last_name: this.$('[name=last_name]').val().trim(),
 			country: this.$('[name=country]').val().trim(),
 			confirmed: this.$('[name=confirmed]').is(':checked') ? 1 : 0,
-			is_admin: this.$('[name=is_admin]').is(':checked') ? 1 : 0
+			is_admin: this.$('[name=is_admin]').is(':checked') ? 1 : 0,
+			is_superuser: this.$('[name=is_superuser]').is(':checked') ? 1 : 0,
+			organization_ids: this.$('[name=organization_ids]').val() || []
 		};
 
 		var password = this.$('[name=password]').val();

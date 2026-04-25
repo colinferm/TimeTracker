@@ -9,6 +9,10 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 		this.model = options.model;
 		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
 		this.template = Handlebars.compile(html);
+
+		this.organizations = new TimeTracker.Collections.Organizations();
+		this.listenTo(this.organizations, 'reset sync', this.renderOrgSelect);
+		this.organizations.fetch({ reset: true });
 	},
 
 	render: function() {
@@ -16,6 +20,17 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 		if (this.model.attributes.start_date == null) this.model.attributes.start_date = new Date().toISOString().split('T')[0];
 		this.$el.html(this.template({ client: this.model.toJSON(), isNew: this.model.isNew() }));
 		return this;
+	},
+
+	renderOrgSelect: function() {
+		var currentOrgId = this.model.get('organization_id');
+		var $select = this.$('[name=organization_id]');
+		$select.empty();
+		$select.append('<option value="">-- No Organization --</option>');
+		this.organizations.each(function(o) {
+			var selected = (o.get('id') == currentOrgId) ? ' selected' : '';
+			$select.append('<option value="' + o.get('id') + '"' + selected + '>' + o.get('name') + '</option>');
+		});
 	},
 
 	doSave: function(callback) {
@@ -33,7 +48,8 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 			start_date: this.$('[name=start_date]').val(),
 			end_date: this.$('[name=end_date]').val() || null,
 			invoice_services: this.$('[name=invoice_services]').val().trim(),
-			invoice_line_item: this.$('[name=invoice_line_item]').val().trim()
+			invoice_line_item: this.$('[name=invoice_line_item]').val().trim(),
+			organization_id: parseInt(this.$('[name=organization_id]').val()) || null
 		};
 
 		this.$('.form-error').hide();

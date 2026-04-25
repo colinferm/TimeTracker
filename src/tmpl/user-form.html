@@ -38,9 +38,18 @@
         <input type="checkbox" name="confirmed" id="user-confirmed" class="form-check-input" {{#if user.confirmed}}checked{{/if}}>
         <label class="form-check-label" for="user-confirmed">Confirmed</label>
     </div>
-    <div class="mb-3 form-check">
+    <div class="mb-2 form-check">
         <input type="checkbox" name="is_admin" id="user-is-admin" class="form-check-input" {{#if user.is_admin}}checked{{/if}}>
         <label class="form-check-label" for="user-is-admin">Administrator</label>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" name="is_superuser" id="user-is-superuser" class="form-check-input" {{#if user.is_superuser}}checked{{/if}}>
+        <label class="form-check-label" for="user-is-superuser">Superuser</label>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Organizations</label>
+        <select name="organization_ids" id="user-organizations" class="form-control" multiple style="min-height:100px;">
+        </select>
     </div>
     <div class="alert alert-danger form-error mb-0" style="display:none;">An error occurred. Please try again.</div>
 </form>

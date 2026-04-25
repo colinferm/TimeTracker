@@ -1,0 +1,33 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Organizations</h2>
+    <button class="btn btn-primary btn-add-organization">+ Add Organization</button>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Organization Name</th>
+                    <th>City</th>
+                    <th>State / Province</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each organizations}}
+                <tr>
+                    <td>
+                        <a href="#" class="org-name-link fw-semibold" data-id="{{id}}">{{name}}</a>
+                    </td>
+                    <td>{{#if city}}{{city}}{{else}}&mdash;{{/if}}</td>
+                    <td>{{#if state_province}}{{state_province}}{{else}}&mdash;{{/if}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="3" class="text-center text-muted fst-italic py-4">No organizations yet. Click "Add Organization" to get started.</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+</div>
