@@ -57,6 +57,10 @@
         <label for="client-country">Country</label>
     </div>
     <div class="form-floating mb-3">
+        <input type="color" name="color" id="client-color" class="form-control form-control-color w-100" value="{{client.color}}">
+        <label for="client-color">Color</label>
+    </div>
+    <div class="form-floating mb-3">
         <input type="number" name="bill_rate" id="client-bill-rate" class="form-control" value="{{client.bill_rate}}" min="0" step="0.01" placeholder="135.00">
         <label for="client-bill-rate">Bill Rate ($/hr)</label>
     </div>

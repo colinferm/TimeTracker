@@ -61,6 +61,7 @@ CREATE TABLE tt_client (
 	bill_rate DECIMAL(6,2) NOT NULL DEFAULT 135.00,
 	invoice_services TEXT,
 	invoice_line_item TEXT,
+	color VARCHAR(10) NOT NULL DEFAULT '#FFFFFF',
 	start_date DATE NOT NULL,
 	end_date DATE,
 	PRIMARY KEY (id)

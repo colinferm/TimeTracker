@@ -145,6 +145,16 @@ TimeTracker.Utils.Resolver = {
 	}
 };
 
+// Found: https://stackoverflow.com/questions/11867545/change-text-color-based-on-brightness-of-the-covered-background-area
+// Credit: cyang 8/8/2012
+TimeTracker.Utils.getContrastYIQ = function(hexcolor) {
+    var r = parseInt(hexcolor.substring(1,3),16);
+    var g = parseInt(hexcolor.substring(3,5),16);
+    var b = parseInt(hexcolor.substring(5,7),16);
+    var yiq = ((r*299)+(g*587)+(b*114))/1000;
+    return (yiq >= 128) ? '#000' : '#FFF';
+}
+
 // Attaches the JWT Bearer token to every Backbone sync request
 TimeTracker.Apps.handleAjaxAuth = function(xhr) {
 	var token = localStorage.getItem('tt_token');

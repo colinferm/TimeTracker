@@ -12,6 +12,7 @@ TimeTracker.Models.Client = Backbone.Model.extend({
 			postal_code: '',
 			country: '',
 			bill_rate: 135.00,
+			color: '#FFFFFF',
 			start_date: null,
 			end_date: null
 		};

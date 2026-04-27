@@ -114,7 +114,7 @@ $getMonthlySummary = function (Request $request, Response $response) use ($db): 
     $month = $params['month'] ?? date('Y-m');
 
     $stmt = $db->prepare(
-        "SELECT r.client_id, c.name AS client_name,
+        "SELECT r.client_id, c.name AS client_name, c.color,
                 SUM(r.num_hours) AS total_hours,
                 SUM(r.num_hours * CASE WHEN p.bill_rate > 0 THEN p.bill_rate ELSE c.bill_rate END) AS total_billings
          FROM tt_time_record r
@@ -134,7 +134,7 @@ $getHoursSummary = function (Request $request, Response $response) use ($db): Re
     $month = $params['month'] ?? date('Y-m');
 
     $stmt = $db->prepare(
-        "SELECT DATE(work_date) AS date, r.client_id, c.name AS client_name, SUM(r.num_hours) AS total_hours
+        "SELECT DATE(work_date) AS date, r.client_id, c.name AS client_name, c.color, SUM(r.num_hours) AS total_hours
          FROM tt_time_record r
          LEFT JOIN tt_client c ON c.id = r.client_id
          WHERE DATE_FORMAT(work_date, '%Y-%m') = ?

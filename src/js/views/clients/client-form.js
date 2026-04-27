@@ -45,6 +45,7 @@ TimeTracker.Views.Clients.Form = Backbone.View.extend({
 			postal_code: this.$('[name=postal_code]').val().trim(),
 			country: this.$('[name=country]').val().trim(),
 			bill_rate: parseFloat(this.$('[name=bill_rate]').val()) || 0,
+			color: this.$('[name=color]').val(),
 			start_date: this.$('[name=start_date]').val(),
 			end_date: this.$('[name=end_date]').val() || null,
 			invoice_services: this.$('[name=invoice_services]').val().trim(),

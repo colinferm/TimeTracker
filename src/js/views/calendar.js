@@ -37,7 +37,11 @@ TimeTracker.Views.Calendar = Backbone.View.extend({
 		var byDate = {};
 		summary.forEach(function(row) {
 			if (!byDate[row.date]) byDate[row.date] = [];
-			byDate[row.date].push({ client_name: row.client_name, total_hours: parseFloat(row.total_hours) });
+			byDate[row.date].push({ 
+				client_name: row.client_name, 
+				color: row.color, 
+				total_hours: parseFloat(row.total_hours) 
+			});
 		});
 		this.$('.calendar-day[data-date]').each(function() {
 			var date = $(this).data('date');
@@ -45,7 +49,8 @@ TimeTracker.Views.Calendar = Backbone.View.extend({
 			if (!entries) return;
 			var html = '<div class="mt-1">';
 			entries.forEach(function(e) {
-				html += '<div class="small text-start lh-sm">' + e.client_name + ': <span class="text-muted">' + e.total_hours + 'hrs</span></div>';
+				let fontColor = TimeTracker.Utils.getContrastYIQ(e.color);
+				html += '<div class="small text-start lh-sm p-1" style="color: '+fontColor+'; background-color: '+e.color+';">' + e.client_name + ': <span style="color: '+fontColor+';">' + e.total_hours + 'hrs</span></div>';
 			});
 			html += '</div>';
 			$(this).append(html);
