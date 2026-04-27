@@ -11,8 +11,7 @@ TimeTracker.Views.Calendar = Backbone.View.extend({
 
 	initialize: function() {
 		this.current = moment().startOf('month');
-		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
-		this.template = Handlebars.compile(html);
+		this.template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get(this.templateName));
 	},
 
 	render: function() {
@@ -73,6 +72,10 @@ TimeTracker.Views.Calendar = Backbone.View.extend({
 			$container.empty();
 			return;
 		}
+		tableTemplate = Handlebars.compile(TimeTracker.Utils.UI.TPL.get("calendar-report-table"));
+		tableItemTemplate = Handlebars.compile(TimeTracker.Utils.UI.TPL.get("calendar-report-table-item"));
+		var renderedRows = [];
+
 		var totalHours = 0, totalBillings = 0;
 		var rowsHtml = '';
 		rows.forEach(function(r) {
@@ -80,15 +83,17 @@ TimeTracker.Views.Calendar = Backbone.View.extend({
 			var billings = parseFloat(r.total_billings);
 			totalHours += hours;
 			totalBillings += billings;
-			rowsHtml += '<tr><td>' + r.client_name + '</td><td>' + hours.toFixed(2) + '</td><td>$' + TimeTracker.Utils.Formatters.money(billings) + '</td></tr>';
+			renderedRows.push(tableItemTemplate({
+				client_name: r.client_name,
+				hours: hours.toFixed(2),
+				billings: TimeTracker.Utils.Formatters.money(billings)
+			}));
 		});
-		$container.html(
-			'<table class="table table-bordered table-sm mt-4">' +
-			'<thead class="table-light"><tr><th>Client</th><th>Hours</th><th>Billings</th></tr></thead>' +
-			'<tbody>' + rowsHtml + '</tbody>' +
-			'<tfoot class="table-light fw-bold"><tr><td>Total</td><td>' + totalHours.toFixed(2) + '</td><td>$' + TimeTracker.Utils.Formatters.money(totalBillings) + '</td></tr></tfoot>' +
-			'</table>'
-		);
+		$container.html(tableTemplate({
+			total_hours: totalHours.toFixed(2),
+			total_billings: TimeTracker.Utils.Formatters.money(totalBillings)
+		}));
+		$container.find('tbody').html(renderedRows.join(''));
 	},
 
 	buildCalendarData: function() {

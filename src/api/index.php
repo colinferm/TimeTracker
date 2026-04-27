@@ -70,13 +70,14 @@ $authMiddleware = function (Request $request, $handler) use ($jwtConfig): Respon
     }
 
     try {
+        /** @var \Lcobucci\JWT\Token\Plain $token */
         $token = $jwtConfig->parser()->parse($tokenString);
         $jwtConfig->validator()->assert(
             $token,
             new SignedWith($jwtConfig->signer(), $jwtConfig->signingKey())
         );
         $request = $request->withAttribute('userId', $token->claims()->get('uid'));
-    } catch (\Exception $e) {
+    } catch (\Exception) {
         $response = new \Slim\Psr7\Response();
         $response->getBody()->write(json_encode(['error' => 'Invalid or expired token']));
         return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
@@ -127,6 +128,7 @@ $app->get('/hours/monthly-summary', $getMonthlySummary)->add($authMiddleware);
 $app->get('/hours/{id}', $getTimeRecord)->add($authMiddleware);
 $app->put('/hours/{id}', $updateTimeRecord)->add($authMiddleware);
 $app->delete('/hours/{id}', $deleteTimeRecord)->add($authMiddleware);
+$app->delete('/hours', $deleteTimeRecordsByDate)->add($authMiddleware);
 
 // ─── Exports ──────────────────────────────────────────────────────────────────
 $app->get('/exports/excel', $exportExcel)->add($authMiddleware);

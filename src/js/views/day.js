@@ -6,7 +6,8 @@ TimeTracker.Views.Day = Backbone.View.extend({
 	events: {
 		'click .btn-add-record': 'addRecord',
 		'click .time-record-item': 'selectRecord',
-		'click .btn-back-to-calendar': 'backToCalendar'
+		'click .btn-back-to-calendar': 'backToCalendar',
+		'click .btn-remove-all': 'confirmRemoveAll'
 	},
 
 	initialize: function(options) {
@@ -14,9 +15,7 @@ TimeTracker.Views.Day = Backbone.View.extend({
 		this.records = new TimeTracker.Collections.Client.TimeRecords();
 		this.records.url = '/api/hours?date=' + this.date;
 		this.clients = new TimeTracker.Collections.Clients();
-
-		var html = TimeTracker.Utils.UI.TPL.get(this.templateName);
-		this.template = Handlebars.compile(html);
+		this.template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get(this.templateName));
 
 		this.listenTo(this.records, 'reset sync', this.renderRecords);
 		this.records.fetch({ reset: true });
@@ -35,8 +34,7 @@ TimeTracker.Views.Day = Backbone.View.extend({
 		var $list = this.$('.record-list');
 		$list.empty();
 
-		var html = TimeTracker.Utils.UI.TPL.get('time-record-item');
-		var template = Handlebars.compile(html);
+		var template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get('time-record-item'));
 		this.records.each(function(record) {
 			var json = record.toJSON();
 			var start = moment(json.work_date);
@@ -47,6 +45,34 @@ TimeTracker.Views.Day = Backbone.View.extend({
 		});
 	},
 
+	showConfirmModal: function(message, onProceed) {
+		this.$('.confirm-delete-message').text(message);
+		var modal = new bootstrap.Modal(this.$('#confirm-delete-modal')[0]);
+		this.$('.btn-confirm-proceed').off('click').on('click', function() {
+			modal.hide();
+			onProceed();
+		});
+		modal.show();
+	},
+
+	confirmRemoveAll: function() {
+		var self = this;
+		this.showConfirmModal(
+			'Confirming will delete all hour records for this day.',
+			function() {
+				$.ajax({
+					url: '/api/hours?date=' + self.date,
+					method: 'DELETE',
+					beforeSend: TimeTracker.Apps.handleAjaxAuth,
+					success: function() {
+						self.records.fetch({ reset: true });
+						self.$('.record-detail').empty();
+					}
+				});
+			}
+		);
+	},
+
 	selectRecord: function(e) {
 		var id = $(e.currentTarget).data('id');
 		var record = this.records.get(id);
@@ -54,8 +80,7 @@ TimeTracker.Views.Day = Backbone.View.extend({
 	},
 
 	showDetail: function(record) {
-		var html = TimeTracker.Utils.UI.TPL.get('time-record-detail');
-		var template = Handlebars.compile(html);
+		var template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get('time-record-detail'));
 		this.$('.record-detail').html(template({ record: record.toJSON() }));
 
 		this.$('.btn-edit-record').off('click').on('click', _.bind(function() {
@@ -141,6 +166,20 @@ TimeTracker.Views.Day = Backbone.View.extend({
 			} else {
 				this.$('.record-detail').empty();
 			}
+		}, this));
+
+		this.$('.btn-delete-record').off('click').on('click', _.bind(function() {
+			self.showConfirmModal(
+				'Confirming will delete this hour record.',
+				function() {
+					record.destroy({
+						success: function() {
+							self.records.fetch({ reset: true });
+							self.$('.record-detail').empty();
+						}
+					});
+				}
+			);
 		}, this));
 	},
 

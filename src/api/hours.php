@@ -22,7 +22,7 @@ $listTimeRecords = function (Request $request, Response $response) use ($db): Re
         $values[] = $params['project_id'];
     }
 
-    $sql = 'SELECT r.*, c.name AS client_name, p.name AS project_name
+    $sql = 'SELECT r.*, c.name AS client_name, c.color, p.name AS project_name
              FROM tt_time_record r
              LEFT JOIN tt_client c ON c.id = r.client_id
              LEFT JOIN tt_client_project p ON p.id = r.project_id';
@@ -106,6 +106,19 @@ $updateTimeRecord = function (Request $request, Response $response, array $args)
 $deleteTimeRecord = function (Request $request, Response $response, array $args) use ($db): Response {
     $db->prepare('DELETE FROM tt_time_record WHERE id = ?')->execute([$args['id']]);
     $response->getBody()->write(json_encode(['message' => 'Time record deleted']));
+    return $response->withHeader('Content-Type', 'application/json');
+};
+
+$deleteTimeRecordsByDate = function (Request $request, Response $response) use ($db): Response {
+    $date = $request->getQueryParams()['date'] ?? null;
+
+    if (!$date) {
+        $response->getBody()->write(json_encode(['error' => "'date' parameter is required"]));
+        return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+    }
+
+    $db->prepare('DELETE FROM tt_time_record WHERE DATE(work_date) = ?')->execute([$date]);
+    $response->getBody()->write(json_encode(['message' => 'Time records deleted']));
     return $response->withHeader('Content-Type', 'application/json');
 };
 
