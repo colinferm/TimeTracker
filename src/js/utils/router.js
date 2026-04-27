@@ -11,6 +11,20 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 		'users': 'users'
 	},
 
+	requireAdmin: function() {
+		if (!app.session || parseInt(app.session.user.is_admin) !== 1) {
+			this.navigate('calendar', { trigger: true });
+			return;
+		}
+	},
+
+	requireSuperUser: function() {
+		if (!app.session || parseInt(app.session.user.is_superuser) !== 1) {
+			this.navigate('calendar', { trigger: true });
+			return;
+		}
+	},
+
 	calendar: function() {
 		app.showView(new TimeTracker.Views.Calendar());
 	},
@@ -20,10 +34,12 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 	},
 
 	clients: function() {
+		this.requireAdmin();
 		app.showView(new TimeTracker.Views.Clients.List());
 	},
 
 	projects: function() {
+		this.requireAdmin();
 		app.showView(new TimeTracker.Views.Projects.List());
 	},
 
@@ -32,18 +48,17 @@ TimeTracker.Routers.Main = Backbone.Router.extend({
 	},
 
 	invoices: function() {
+		this.requireAdmin();
 		app.showView(new TimeTracker.Views.Invoices.List());
 	},
 
 	organizations: function() {
+		this.requireSuperUser();
 		app.showView(new TimeTracker.Views.Organizations.List());
 	},
 
 	users: function() {
-		if (!app.session || parseInt(app.session.user.is_admin) !== 1) {
-			this.navigate('calendar', { trigger: true });
-			return;
-		}
+		this.requireAdmin();
 		app.showView(new TimeTracker.Views.Users.List());
 	}
 });

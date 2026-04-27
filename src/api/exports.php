@@ -6,9 +6,19 @@ use Psr\Http\Message\ResponseInterface as Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-function fetchTimeRecords(PDO $db, array $params): array {
+function fetchTimeRecords(PDO $db, array $params, ?array $orgIds = null): array {
+    if ($orgIds !== null && empty($orgIds)) {
+        return [];
+    }
+
     $where = [];
     $values = [];
+
+    if ($orgIds !== null) {
+        $ph = orgPlaceholders($orgIds);
+        $where[] = "r.client_id IN (SELECT id FROM tt_client WHERE organization_id IN ($ph))";
+        $values = $orgIds;
+    }
 
     if (!empty($params['client_id'])) {
         $where[] = 'r.client_id = ?';
@@ -36,8 +46,10 @@ function fetchTimeRecords(PDO $db, array $params): array {
 }
 
 $exportExcel = function (Request $request, Response $response) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
     $params = $request->getQueryParams();
-    $rows = fetchTimeRecords($db, $params);
+    $orgIds = $perms['superuser'] ? null : $perms['org_ids'];
+    $rows = fetchTimeRecords($db, $params, $orgIds);
 
     $spreadsheet = new Spreadsheet();
     $sheet = $spreadsheet->getActiveSheet();
@@ -76,8 +88,10 @@ $exportExcel = function (Request $request, Response $response) use ($db): Respon
 };
 
 $exportPdf = function (Request $request, Response $response) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
     $params = $request->getQueryParams();
-    $rows = fetchTimeRecords($db, $params);
+    $orgIds = $perms['superuser'] ? null : $perms['org_ids'];
+    $rows = fetchTimeRecords($db, $params, $orgIds);
 
     require_once __DIR__ . '/lib/vendor/setasign/fpdf/fpdf.php';
 
@@ -123,24 +137,50 @@ $exportPdf = function (Request $request, Response $response) use ($db): Response
         ->withHeader('Content-Disposition', "attachment; filename=\"{$filename}\"");
 };
 
-$listInvoices = function(Request $request, Response $response) use ($db): Response {
-    $rows = $db->query(
-        'SELECT i.*, c.name AS client_name
-         FROM tt_invoice i
-         LEFT JOIN tt_client c ON c.id = i.client_id
-         ORDER BY i.created DESC'
-    )->fetchAll();
+$listInvoices = function (Request $request, Response $response) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+
+    if ($perms['superuser']) {
+        $rows = $db->query(
+            'SELECT i.*, c.name AS client_name
+             FROM tt_invoice i
+             LEFT JOIN tt_client c ON c.id = i.client_id
+             ORDER BY i.created DESC'
+        )->fetchAll();
+    } elseif (!empty($perms['org_ids'])) {
+        $ph = orgPlaceholders($perms['org_ids']);
+        $stmt = $db->prepare(
+            "SELECT i.*, c.name AS client_name
+             FROM tt_invoice i
+             LEFT JOIN tt_client c ON c.id = i.client_id
+             WHERE c.organization_id IN ($ph)
+             ORDER BY i.created DESC"
+        );
+        $stmt->execute($perms['org_ids']);
+        $rows = $stmt->fetchAll();
+    } else {
+        $rows = [];
+    }
+
     $response->getBody()->write(json_encode($rows));
     return $response->withHeader('Content-Type', 'application/json');
 };
 
-$createInvoice = function(Request $request, Response $response) use ($db): Response {
+$createInvoice = function (Request $request, Response $response) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
     $data = $request->getParsedBody() ?? [];
 
     foreach (['client_id', 'start_date', 'end_date'] as $field) {
         if (empty($data[$field])) {
             $response->getBody()->write(json_encode(['error' => "Field '{$field}' is required"]));
             return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+        }
+    }
+
+    if (!$perms['superuser']) {
+        $orgId = clientOrgId($db, (int)$data['client_id']);
+        if (!in_array($orgId, $perms['org_ids'])) {
+            return unauthorized($response);
         }
     }
 
@@ -205,7 +245,21 @@ $createInvoice = function(Request $request, Response $response) use ($db): Respo
     return $response->withStatus(201)->withHeader('Content-Type', 'application/json');
 };
 
-$updateInvoice = function(Request $request, Response $response, array $args) use ($db): Response {
+$updateInvoice = function (Request $request, Response $response, array $args) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+
+    if (!$perms['superuser']) {
+        $chk = $db->prepare('SELECT client_id FROM tt_invoice WHERE id = ?');
+        $chk->execute([$args['id']]);
+        $inv = $chk->fetch();
+        if ($inv) {
+            $orgId = clientOrgId($db, (int)$inv['client_id']);
+            if (!in_array($orgId, $perms['org_ids'])) {
+                return unauthorized($response);
+            }
+        }
+    }
+
     $data = $request->getParsedBody() ?? [];
     $fields = ['modified = NOW()'];
     $values = [];
@@ -241,17 +295,42 @@ $updateInvoice = function(Request $request, Response $response, array $args) use
     return $response->withHeader('Content-Type', 'application/json');
 };
 
-$generateInvoicePdf = function(Request $request, Response $response, array $args) use ($db): Response {
+$deleteInvoice = function (Request $request, Response $response, array $args) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+    $itemId = (int)$args['id'];
+
+    if (!$perms['superuser']) {
+        $chk = $db->prepare('SELECT client_id FROM tt_invoice WHERE id = ?');
+        $chk->execute([$itemId]);
+        $inv = $chk->fetch();
+        if ($inv) {
+            $orgId = clientOrgId($db, (int)$inv['client_id']);
+            if (!in_array($orgId, $perms['org_ids'])) {
+                return unauthorized($response);
+            }
+        }
+    }
+
+    $db->prepare('DELETE FROM tt_invoice_record_map WHERE invoice_id = ?')->execute([$itemId]);
+    $db->prepare('DELETE FROM tt_invoice WHERE id = ?')->execute([$itemId]);
+
+    $response->getBody()->write(json_encode(['message' => 'Invoice deleted']));
+    return $response->withHeader('Content-Type', 'application/json');
+};
+
+$generateInvoicePdf = function (Request $request, Response $response, array $args) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+
     require_once __DIR__ . '/lib/vendor/setasign/fpdf/fpdf.php';
 
     $stmt = $db->prepare(
-        'SELECT i.id, i.client_id, i.project_id, i.paid_date, i.is_billed, 
+        'SELECT i.id, i.client_id, i.project_id, i.paid_date, i.is_billed,
                 i.invoice_total, i.invoice_number, i.billed_date, i.created,
                 c.name AS client_name, c.address_1, c.address_2,
                 c.city, c.state_province, c.postal_code, c.bill_rate AS client_bill_rate,
                 c.invoice_services, c.invoice_line_item,
                 o.name AS org_name, o.address_1 AS org_address_1, o.address_2 AS org_address_2,
-                o.city AS org_city, o.state_province AS org_state_province, 
+                o.city AS org_city, o.state_province AS org_state_province,
                 o.postal_code AS org_postal_code, o.country AS org_country,
                 o.phone_number AS org_phone_number, u.first_name, u.last_name
          FROM tt_invoice i
@@ -266,6 +345,13 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     if (!$invoice) {
         $response->getBody()->write(json_encode(['error' => 'Invoice not found']));
         return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+    }
+
+    if (!$perms['superuser']) {
+        $orgId = clientOrgId($db, (int)$invoice['client_id']);
+        if (!in_array($orgId, $perms['org_ids'])) {
+            return unauthorized($response);
+        }
     }
 
     $recStmt = $db->prepare(
@@ -579,18 +665,4 @@ $generateInvoicePdf = function(Request $request, Response $response, array $args
     return $response
         ->withHeader('Content-Type', 'application/pdf')
         ->withHeader('Content-Disposition', 'inline; filename="' . $filename . '"');
-};
-
-$deleteInvoice = function(Request $request, Response $response, array $args) use ($db): Response {
-    $data = $request->getParsedBody() ?? [];
-    $itemId = $args['id'];
-
-    $deleteMapSQL = "DELETE FROM tt_invoice_record_map WHERE invoice_id = ?";
-    $db->prepare($deleteMapSQL)->execute($deleteMapSQL);
-
-    $deleteInvoiceSQL = "DELETE FROM tt_invoice WHERE id = ?";
-    $db->prepare($deleteInvoiceSQL)->execute($deleteInvoiceSQL);
-
-    $response->getBody()->write(json_encode(['message' => 'Invoice deleted']));
-    return $response->withHeader('Content-Type', 'application/json');
 };

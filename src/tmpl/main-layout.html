@@ -8,6 +8,7 @@
         </button>
         <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav me-auto">
+                {{#if user.is_admin}}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Partners</a>
                     <ul class="dropdown-menu">
@@ -15,6 +16,8 @@
                         <li><a class="dropdown-item" href="#projects">Projects</a></li>
                     </ul>
                 </li>
+                {{/if}}
+                {{#if user.is_admin}}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Reports</a>
                     <ul class="dropdown-menu">
@@ -22,14 +25,16 @@
                         <li><a class="dropdown-item" href="#invoices">Invoices</a></li>
                     </ul>
                 </li>
-                {{#if user.is_admin}}
-                <li class="nav-item">
-                    <a class="nav-link" href="#users">Users</a>
-                </li>
                 {{/if}}
-                {{#if user.is_superuser}}
-                <li class="nav-item">
-                    <a class="nav-link" href="#organizations">Organizations</a>
+                {{#if user.is_admin}}
+                    <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Admin</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#users">Users</a></li>
+                        {{#if user.is_superuser}}
+                            <li><a class="dropdown-item" href="#organizations">Organizations</a></li>
+                        {{/if}}
+                    </ul>
                 </li>
                 {{/if}}
             </ul>

@@ -23,9 +23,11 @@ TimeTracker.Views.Day = Backbone.View.extend({
 	},
 
 	render: function() {
+		let user = app.session.user
 		this.$el.html(this.template({
 			date: this.date,
-			dateLabel: moment(this.date).format('dddd, MMMM D, YYYY')
+			dateLabel: moment(this.date).format('dddd, MMMM D, YYYY'),
+			user: user
 		}));
 		return this;
 	},
@@ -90,15 +92,15 @@ TimeTracker.Views.Day = Backbone.View.extend({
 
 	showEditForm: function(record, isNew) {
 		var self = this;
-		var html = TimeTracker.Utils.UI.TPL.get('time-record-form');
-		var template = Handlebars.compile(html);
+		let user = app.session.user
+		var template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get('time-record-form'));
 
 		var data = record ? record.toJSON() : {
 			work_date: roundToNearest15(new Date()).toISOString().slice(0, 16),
 			num_hours: 1.0
 		};
 
-		this.$('.record-detail').html(template({ record: data }));
+		this.$('.record-detail').html(template({ record: data, user: user }));
 
 		var $clientSelect = self.$('[name=client_id]');
 		var $projectSelect = self.$('[name=project_id]');

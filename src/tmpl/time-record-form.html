@@ -28,7 +28,9 @@
             <label for="record-work-desc">Description</label>
         </div>
         <div class="d-flex justify-content-end gap-2">
-            {{#if record.id}}<button class="btn btn-danger btn-delete-record me-auto">Delete</button>{{/if}}
+            {{#if user.is_admin}}
+                {{#if record.id}}<button class="btn btn-danger btn-delete-record me-auto">Delete</button>{{/if}}
+            {{/if}}
             <button class="btn btn-secondary btn-cancel-record">Cancel</button>
             <button class="btn btn-success btn-save-record">Save</button>
         </div>

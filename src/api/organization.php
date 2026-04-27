@@ -5,12 +5,27 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
 $listOrganizations = function (Request $request, Response $response) use ($db): Response {
-    $stmt = $db->query('SELECT id, primary_user_id, name, address_1, address_2, city, state_province, postal_code, country, phone_number FROM tt_organization ORDER BY name');
-    $response->getBody()->write(json_encode($stmt->fetchAll()));
+    $perms = $request->getAttribute('permissions');
+
+    if ($perms['superuser']) {
+        $stmt = $db->query('SELECT id, primary_user_id, name, address_1, address_2, city, state_province, postal_code, country, phone_number FROM tt_organization ORDER BY name');
+        $orgs = $stmt->fetchAll();
+    } elseif (!empty($perms['org_ids'])) {
+        $ph = orgPlaceholders($perms['org_ids']);
+        $stmt = $db->prepare("SELECT id, primary_user_id, name, address_1, address_2, city, state_province, postal_code, country, phone_number FROM tt_organization WHERE id IN ($ph) ORDER BY name");
+        $stmt->execute($perms['org_ids']);
+        $orgs = $stmt->fetchAll();
+    } else {
+        $orgs = [];
+    }
+
+    $response->getBody()->write(json_encode($orgs));
     return $response->withHeader('Content-Type', 'application/json');
 };
 
 $getOrganization = function (Request $request, Response $response, array $args) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+
     $stmt = $db->prepare('SELECT id, primary_user_id, name, address_1, address_2, city, state_province, postal_code, country, phone_number FROM tt_organization WHERE id = ?');
     $stmt->execute([$args['id']]);
     $org = $stmt->fetch();
@@ -18,6 +33,10 @@ $getOrganization = function (Request $request, Response $response, array $args) 
     if (!$org) {
         $response->getBody()->write(json_encode(['error' => 'Organization not found']));
         return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+    }
+
+    if (!$perms['superuser'] && !in_array((int)$org['id'], $perms['org_ids'])) {
+        return unauthorized($response);
     }
 
     $response->getBody()->write(json_encode($org));
@@ -53,6 +72,12 @@ $createOrganization = function (Request $request, Response $response) use ($db):
 };
 
 $updateOrganization = function (Request $request, Response $response, array $args) use ($db): Response {
+    $perms = $request->getAttribute('permissions');
+
+    if (!$perms['superuser'] && !in_array((int)$args['id'], $perms['org_ids'])) {
+        return unauthorized($response);
+    }
+
     $data = $request->getParsedBody() ?? [];
     $fields = [];
     $values = [];
