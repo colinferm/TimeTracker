@@ -83,6 +83,7 @@ DROP TABLE IF EXISTS tt_time_record;
 CREATE TABLE tt_time_record (
 	id INT NOT NULL AUTO_INCREMENT,
 	client_id INT NOT NULL,
+	user_id INT NOT NULL,
 	project_id INT,
 	work_desc TEXT,
 	work_date DATETIME NOT NULL,

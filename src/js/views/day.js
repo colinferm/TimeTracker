@@ -141,15 +141,16 @@ TimeTracker.Views.Day = Backbone.View.extend({
 		});
 
 		this.$('.btn-save-record').off('click').on('click', function() {
+			if (!record) record = new TimeTracker.Models.Client.TimeRecord();
+
 			var formData = {
-				client_id: self.$('[name=client_id]').val(),
 				project_id: self.$('[name=project_id]').val() || null,
 				work_desc: self.$('[name=work_desc]').val(),
 				work_date: self.$('[name=work_date]').val(),
 				num_hours: parseFloat(self.$('[name=num_hours]').val())
 			};
+			if (record.isNew()) formData.client_id = self.$('[name=client_id]').val();
 
-			if (!record) record = new TimeTracker.Models.Client.TimeRecord();
 			record.save(formData, {
 				success: function() {
 					self.records.fetch({ reset: true });

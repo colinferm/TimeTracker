@@ -33,10 +33,11 @@ $listTimeRecords = function (Request $request, Response $response) use ($db): Re
 		$values[] = $params['project_id'];
 	}
 
-	$sql = 'SELECT r.*, c.name AS client_name, c.color, p.name AS project_name
+	$sql = 'SELECT r.*, CONCAT(u.first_name, " ", u.last_name) AS consultant, c.name AS client_name, c.color, p.name AS project_name
 			 FROM tt_time_record r
 			 LEFT JOIN tt_client c ON c.id = r.client_id
-			 LEFT JOIN tt_client_project p ON p.id = r.project_id';
+			 LEFT JOIN tt_client_project p ON p.id = r.project_id
+			 LEFT JOIN tt_user u ON r.user_id = u.id';
 	$sql .= $where ? ' WHERE ' . implode(' AND ', $where) : '';
 	$sql .= ' ORDER BY work_date ASC';
 
@@ -51,6 +52,7 @@ $listTimeRecords = function (Request $request, Response $response) use ($db): Re
 $createTimeRecord = function (Request $request, Response $response) use ($db): Response {
 	$perms = $request->getAttribute('permissions');
 	$data = $request->getParsedBody() ?? [];
+	$userId = $request->getAttribute('userId');
 
 	foreach (['client_id', 'work_date', 'num_hours'] as $field) {
 		if (empty($data[$field])) {
@@ -59,19 +61,15 @@ $createTimeRecord = function (Request $request, Response $response) use ($db): R
 		}
 	}
 
-	if (!$perms['superuser']) {
-		$orgId = clientOrgId($db, (int)$data['client_id']);
-		if (!in_array($orgId, $perms['org_ids'])) {
-			return unauthorized($response);
-		}
-	}
+	if (!testIsInOrg($db, $perms, $data['client_id'])) return unauthorized($response);
 
 	$stmt = $db->prepare(
-		'INSERT INTO tt_time_record (client_id, project_id, work_desc, work_date, num_hours, created, modified)
-		 VALUES (?, ?, ?, ?, ?, NOW(), NOW())'
+		'INSERT INTO tt_time_record (client_id, user_id, project_id, work_desc, work_date, num_hours, created, modified)
+		 VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())'
 	);
 	$stmt->execute([
 		$data['client_id'],
+		$userId,
 		$data['project_id'] ?? null,
 		$data['work_desc'] ?? '',
 		$data['work_date'],
@@ -87,10 +85,11 @@ $getTimeRecord = function (Request $request, Response $response, array $args) us
 	$perms = $request->getAttribute('permissions');
 
 	$stmt = $db->prepare(
-		'SELECT r.*, c.name AS client_name, p.name AS project_name
+		'SELECT r.*, CONCAT(u.first_name, " ", u.last_name) AS consultant, c.name AS client_name, p.name AS project_name
 		 FROM tt_time_record r
 		 LEFT JOIN tt_client c ON c.id = r.client_id
 		 LEFT JOIN tt_client_project p ON p.id = r.project_id
+		 LEFT JOIN tt_user u ON r.user_id = u.id
 		 WHERE r.id = ?'
 	);
 	$stmt->execute([$args['id']]);
@@ -101,12 +100,7 @@ $getTimeRecord = function (Request $request, Response $response, array $args) us
 		return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
 	}
 
-	if (!$perms['superuser']) {
-		$orgId = clientOrgId($db, (int)$record['client_id']);
-		if (!in_array($orgId, $perms['org_ids'])) {
-			return unauthorized($response);
-		}
-	}
+	if (!testIsInOrg($db, $perms, $record['client_id'])) return unauthorized($response);
 
 	$response->getBody()->write(json_encode($record));
 	return $response->withHeader('Content-Type', 'application/json');
@@ -170,6 +164,7 @@ $deleteTimeRecordsByDate = function (Request $request, Response $response) use (
 
 	if ($perms['superuser']) {
 		$db->prepare('DELETE FROM tt_time_record WHERE DATE(work_date) = ?')->execute([$date]);
+
 	} elseif (!empty($perms['org_ids'])) {
 		$ph = orgPlaceholders($perms['org_ids']);
 		$stmt = $db->prepare(

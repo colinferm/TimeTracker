@@ -3,12 +3,28 @@
         {{#if record.id}}Edit Entry{{else}}New Entry{{/if}}
     </div>
     <div class="card-body">
+        {{#if record.id}}
+        <div class="mb-3">
+            <b>Client: </b><span class="">{{record.client_name}}</span>
+        </div>
+        {{/if}}
+        <div class="mb-3">
+            <b>Consultant: </b><span class="">
+                {{#if record.consultant}}
+                    {{record.consultant}}
+                {{else}}
+                    {{user.first_name}} {{user.last_name}}
+                {{/if}}
+            </span>
+        </div>
+        {{#unless record.id}}
         <div class="form-floating mb-3">
             <select name="client_id" id="record-client" class="form-control" required>
                 <option value="">-- Select Client --</option>
             </select>
             <label for="record-client">Client <span class="text-danger">*</span></label>
         </div>
+        {{/unless}}
         <div class="form-floating mb-3">
             <select name="project_id" id="record-project" class="form-control">
                 <option value="">-- No project --</option>

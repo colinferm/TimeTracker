@@ -68,7 +68,7 @@ $makeAuthMiddleware = function (string $require = 'any') use ($db, $jwtConfig): 
 
         if (!$tokenString) {
             $r = new \Slim\Psr7\Response();
-            $r->getBody()->write(json_encode(['error' => 'Unauthorized']));
+            $r->getBody()->write(json_encode(['error' => 'Unauthorized token, dude']));
             return $r->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
 
@@ -90,12 +90,12 @@ $makeAuthMiddleware = function (string $require = 'any') use ($db, $jwtConfig): 
 
         if ($require === 'superuser' && !$perms['superuser']) {
             $r = new \Slim\Psr7\Response();
-            $r->getBody()->write(json_encode(['error' => 'Unauthorized']));
+            $r->getBody()->write(json_encode(['error' => 'Unauthorized Sucka!']));
             return $r->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
         if ($require === 'admin' && !$perms['admin'] && !$perms['superuser']) {
             $r = new \Slim\Psr7\Response();
-            $r->getBody()->write(json_encode(['error' => 'Unauthorized']));
+            $r->getBody()->write(json_encode(['error' => 'Totally Unauthorized']));
             return $r->withStatus(401)->withHeader('Content-Type', 'application/json');
         }
 

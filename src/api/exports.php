@@ -347,21 +347,18 @@ $generateInvoicePdf = function (Request $request, Response $response, array $arg
         return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
     }
 
-    if (!$perms['superuser']) {
-        $orgId = clientOrgId($db, (int)$invoice['client_id']);
-        if (!in_array($orgId, $perms['org_ids'])) {
-            return unauthorized($response);
-        }
-    }
+    if (!testIsInOrg($db, $perms, $invoice['client_id'])) return unauthorized($response);
 
     $recStmt = $db->prepare(
-        'SELECT r.num_hours, r.work_date, r.work_desc, r.project_id, c.name AS client_name, p.name AS project_name,
+        'SELECT r.num_hours, r.work_date, r.work_desc, r.project_id, 
+                c.name AS client_name, p.name AS project_name, CONCAT(u.first_name, " ", u.last_name) AS consultant,
                 c.bill_rate AS client_bill_rate, p.bill_rate AS project_bill_rate,
                 p.invoice_line_item AS project_line_item
          FROM tt_invoice_record_map m
          JOIN tt_time_record r ON r.id = m.time_record_id
          LEFT JOIN tt_client c ON c.id = r.client_id
          LEFT JOIN tt_client_project p ON p.id = r.project_id
+         LEFT JOIN tt_user u ON r.user_id = u.id
          WHERE m.invoice_id = ?
          ORDER BY r.work_date ASC'
     );
@@ -619,7 +616,9 @@ $generateInvoicePdf = function (Request $request, Response $response, array $arg
 
     $tsHeaderY = 32;
     $tsRowH    = 7;
-    $colW      = [30, 22, 68, 35, 20];
+    $colW      = [25, 22, 98, 25, 5];
+    // 175w
+
 
     $pdf->SetFillColor(50, 50, 50);
     $pdf->Rect(15, $tsHeaderY, 180, 8, 'F');
@@ -640,7 +639,7 @@ $generateInvoicePdf = function (Request $request, Response $response, array $arg
 
     foreach ($records as $rec) {
         $pdf->SetXY(17, $tsRowY + 1);
-        $pdf->Cell($colW[0], 5, 'Colin Ferm', 0, 0, 'L');
+        $pdf->Cell($colW[0], 5, $rec['consultant'], 0, 0, 'L');
         $pdf->Cell($colW[1], 5, date('n/j/Y', strtotime($rec['work_date'])), 0, 0, 'L');
         $pdf->Cell($colW[2], 5, mb_substr($rec['work_desc'] ?? '', 0, 55), 0, 0, 'L');
         $pdf->Cell($colW[3], 5, mb_substr($rec['project_name'] ?? '', 0, 28), 0, 0, 'L');
@@ -655,8 +654,8 @@ $generateInvoicePdf = function (Request $request, Response $response, array $arg
     $pdf->SetFillColor(200, 200, 200);
     $pdf->SetFont('Arial', 'B', 9);
     $pdf->SetXY(15, $tsRowY);
-    $pdf->Cell(160, $tsRowH, 'Total Hours', 1, 0, 'R', true);
-    $pdf->Cell(20, $tsRowH, number_format($tsTotalHours, 2), 1, 0, 'R', true);
+    $pdf->Cell(165, $tsRowH, 'Total Hours', 1, 0, 'R', true);
+    $pdf->Cell(15, $tsRowH, number_format($tsTotalHours, 2), 1, 0, 'C', true);
 
     $filename = 'invoice-' . $invoice['invoice_number'] . '.pdf';
     $content  = $pdf->Output('S');

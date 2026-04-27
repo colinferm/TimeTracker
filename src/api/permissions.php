@@ -21,7 +21,7 @@ function getUserPermissions(PDO $db, int $userId): array {
 }
 
 function unauthorized(ResponseInterface $response): ResponseInterface {
-	$response->getBody()->write(json_encode(['error' => 'Unauthorized']));
+	$response->getBody()->write(json_encode(['error' => 'Unauthorized, yeah!']));
 	return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
 }
 
