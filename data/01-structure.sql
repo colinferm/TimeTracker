@@ -21,7 +21,7 @@ CREATE TABLE tt_user (
 );
 
 INSERT INTO tt_user (username, userpassword, email_address, confirmed, registered, last_login, is_admin)
-VALUES ('colin', '$2y$10$a2gV2.OC.tEPC9EKXEyzo.bdaFkA.NgIO2pRon8iz4jEdgwdXmM4S', 'colin@fortytwosolutions.com', 1, NOW(), NOW(), 1);
+VALUES ('admin', '$2y$10$a2gV2.OC.tEPC9EKXEyzo.bdaFkA.NgIO2pRon8iz4jEdgwdXmM4S', 'admin@admin.com', 1, NOW(), NOW(), 1);
 
 DROP TABLE IF EXIST tt_organization;
 CREATE TABLE tt_organization (

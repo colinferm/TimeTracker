@@ -6,17 +6,19 @@
 
 <div class="row">
     <div class="col-md-5 col-lg-4">
-        <div class="card">
-            <div class="card-header fw-semibold">Work Entries</div>
+        <div class="card time-records">
+            <div class="card-header d-flex flex-row">
+                <div class="align-self-start flex-fill fw-semibold">Work Entries</div>
+                <div class="align-self-end flex-fill text-end">
+                    {{#if user.is_admin}}
+                        <button class="btn btn-danger btn-sm btn-remove-all">Remove All</button>
+                    {{/if}}
+                </div>
+            </div>
             <div class="list-group list-group-flush record-list">
                 <div class="list-group-item text-muted fst-italic">Loading…</div>
             </div>
         </div>
-        {{#if user.is_admin}}
-        <div class="mt-2 text-end">
-            <button class="btn btn-danger btn-sm btn-remove-all">Remove All</button>
-        </div>
-        {{/if}}
     </div>
     <div class="col-md-7 col-lg-8">
         <div class="record-detail"></div>

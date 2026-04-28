@@ -36,6 +36,12 @@ TimeTracker.Views.Day = Backbone.View.extend({
 		var $list = this.$('.record-list');
 		$list.empty();
 
+		if (!this.records.length) {
+			this.$('.time-records .btn-remove-all').hide();
+		} else {
+			this.$('.time-records .btn-remove-all').show();
+		}
+
 		var template = Handlebars.compile(TimeTracker.Utils.UI.TPL.get('time-record-item'));
 		this.records.each(function(record) {
 			var json = record.toJSON();
